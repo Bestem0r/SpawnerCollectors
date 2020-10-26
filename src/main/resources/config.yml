@@ -1,0 +1,73 @@
+#------------------- General Settings -------------------#
+
+#Plugin messages prefix
+prefix: "&8[&eSpawners&8]"
+#How often should the plugin check if new virtual mobs should spawn? (Seconds)
+spawn_interval: 10
+
+
+#-------------------- Menu settings --------------------#
+menus:
+  #Add/withdraw spawners menu
+  spawners:
+    #GUI title
+    title: "&8Add / withdraw spawners"
+    item_lore: #Placeholders: %amount%
+      - "&7Amount: &c%amount%"
+      - ""
+      - "&7>> Left click to &awithdraw"
+
+  #Sell/withdraw mobs menu
+  mobs:
+    #GUI title
+    title: "&8Collected mobs"
+    item_lore: #Placeholders: %amount%
+      - "&7Amount: &c%amount%"
+      - ""
+      - "&7>> Left click to &ewithdraw"
+      - "&7>> Right click to &asell"
+
+  #Items used in menus
+  items:
+    auto_sell_true:
+      material: LIME_TERRACOTTA
+      name: "&cAuto-sell disabled"
+      lore:
+        - "&7>> Click to &aenable"
+        - "&7auto-sell for mobs collected!"
+    auto_sell_false:
+      material: RED_TERRACOTTA
+      name: "&aAuto-sell enabled"
+      lore:
+        - "&7>> Click to &cdisable"
+        - "&7auto-sell for mobs collected!"
+    filler:
+      material: GRAY_STAINED_GLASS_PANE
+      name: ""
+      lore:
+        - ""
+    mobs:
+      material: SKELETON_SPAWN_EGG
+      name: "&eSwitch to mobs"
+      lore:
+        - "&7>> Click to switch"
+        - "&7to mob view!"
+    spawners:
+      material: SPAWNER
+      name: "&eSwitch to spawners"
+      lore:
+        - "&7>> Click to switch"
+        - "&7to spawners view!"
+
+
+#--------------------- Mob prices ---------------------#
+prices:
+  SKELETON: 50
+  ZOMBIE: 10
+
+#--------------------- Mob materials ---------------------#
+use_headdb: false
+
+materials:
+  SKELETON: SKELETON_SPAWN_EGG
+  ZOMBIE: ZOMBIE_SPAWN_EGG

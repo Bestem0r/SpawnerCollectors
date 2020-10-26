@@ -1,0 +1,6 @@
+name: SpawnerCollectors
+version: 1.0.0
+api-version: 1.13
+main: me.bestem0r.spawnercollectors.SCPlugin
+softdepend: [HeadDatabase]
+commands:
