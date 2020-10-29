@@ -33,17 +33,18 @@ public class InventoryClick implements Listener {
         switch (menu) {
             case ENTITY:
                 event.setCancelled(true);
-                collector.entityMenuInteract(event.getRawSlot(), player);
+                collector.entityMenuInteract(event);
                 break;
             case SPAWNER:
                 event.setCancelled(true);
-                collector.spawnerMenuInteract(event.getRawSlot(), player);
+                collector.spawnerMenuInteract(event);
                 break;
         }
     }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
+        if (this.player != event.getPlayer()) { return; }
         HandlerList.unregisterAll(this);
     }
 

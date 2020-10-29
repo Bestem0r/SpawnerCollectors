@@ -57,7 +57,7 @@ menus:
       lore:
          - "&7>> Click to &cdisable"
         - "&7auto-sell for mobs collected!"
-
+      
     auto_sell_false:
       material: RED_TERRACOTTA
       name: "&cAuto-sell disabled"

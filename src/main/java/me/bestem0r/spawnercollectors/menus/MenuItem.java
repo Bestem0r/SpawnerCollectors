@@ -1,12 +1,10 @@
-package me.bestem0r.spawnercollectors;
+package me.bestem0r.spawnercollectors.menus;
 
 
 import me.bestem0r.spawnercollectors.utilities.Color;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 
@@ -17,7 +15,6 @@ public class MenuItem extends ItemStack {
         private final Material material;
         private String name = "";
         private ArrayList<String> lore = new ArrayList<>();
-        private int amount = 1;
 
         public Builder(Material material) {
             this.material = material;
@@ -37,14 +34,8 @@ public class MenuItem extends ItemStack {
             return this;
         }
 
-        public Builder amount(int amount) {
-            this.amount = amount;
-            return this;
-        }
-
         public MenuItem build() {
             MenuItem item = new MenuItem(material);
-            item.setAmount(amount);
 
             ItemMeta itemMeta = item.getItemMeta();
 
