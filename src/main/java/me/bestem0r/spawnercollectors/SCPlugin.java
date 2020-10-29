@@ -1,10 +1,18 @@
 package me.bestem0r.spawnercollectors;
 
+import me.bestem0r.spawnercollectors.commands.SCCompleter;
+import me.bestem0r.spawnercollectors.commands.SCExecutor;
+import me.bestem0r.spawnercollectors.events.Join;
+import me.bestem0r.spawnercollectors.events.Quit;
+import me.bestem0r.spawnercollectors.utilities.Color;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,6 +31,8 @@ public class SCPlugin extends JavaPlugin {
     public static HashMap<EntityType, Double> prices = new HashMap<>();
     public static HashMap<EntityType, String> materials = new HashMap<>();
 
+    private static final HashMap<OfflinePlayer, Double> earned = new HashMap<>();
+
     private static boolean usingHeadDB;
 
     @Override
@@ -30,10 +40,21 @@ public class SCPlugin extends JavaPlugin {
         super.onEnable();
         instance = this;
 
+        getConfig().options().copyDefaults();
+        saveDefaultConfig();
+
+        Bukkit.getPluginManager().registerEvents(new Join(), this);
+        Bukkit.getPluginManager().registerEvents(new Quit(), this);
+
+        setupEconomy();
         loadValues();
 
-        loadCollectors();
         startSpawners();
+        startMessages();
+
+
+        getCommand("sc").setExecutor(new SCExecutor());
+        getCommand("sc").setTabCompleter(new SCCompleter());
     }
 
     @Override
@@ -51,6 +72,18 @@ public class SCPlugin extends JavaPlugin {
     private void loadValues() {
         usingHeadDB = getConfig().getBoolean("use_headdb");
         loadEntities();
+        //loadCollectors();
+    }
+
+    /** Reloads config values */
+    public void reloadValues() {
+        Bukkit.getScheduler().cancelTasks(this);
+        prices.clear();
+        materials.clear();
+        loadEntities();
+
+        startSpawners();
+        startMessages();
     }
 
     /** Starts async thread to replicate spawner mechanics */
@@ -61,6 +94,27 @@ public class SCPlugin extends JavaPlugin {
                 collector.attemptSpawn();
             }
         }, timer, timer);
+    }
+    /** Async message thread for earned money by auto-sell */
+    private void startMessages() {
+        int minutes = getConfig().getInt("notify_interval");
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            for (OfflinePlayer offlinePlayer : earned.keySet()) {
+
+                if (offlinePlayer.isOnline()) {
+                    Player player = offlinePlayer.getPlayer();
+                    if (player == null) { continue; }
+
+                    player.sendMessage(new Color.Builder().path("messages.earned_notify")
+                            .replaceWithCurrency("%worth%", String.valueOf(earned.get(offlinePlayer)))
+                            .replace("%time%", String.valueOf(minutes))
+                            .addPrefix()
+                            .build());
+                    player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.notification")), 1, 1);
+                }
+            }
+            earned.clear();
+        }, minutes * 20 * 60, minutes * 20 * 60);
     }
 
     /** Load entity prices and material strings */
@@ -108,5 +162,15 @@ public class SCPlugin extends JavaPlugin {
     }
     public static boolean isUsingHeadDB() {
         return usingHeadDB;
+    }
+
+
+    /** Earned message methods */
+    public static void addEarned(OfflinePlayer player, double amount) {
+        if (earned.containsKey(player)) {
+            earned.replace(player, earned.get(player) + amount);
+        } else {
+            earned.put(player, amount);
+        }
     }
 }

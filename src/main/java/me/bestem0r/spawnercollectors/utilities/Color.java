@@ -2,6 +2,7 @@ package me.bestem0r.spawnercollectors.utilities;
 
 import me.bestem0r.spawnercollectors.SCPlugin;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.ArrayList;
@@ -12,11 +13,18 @@ public abstract class Color {
 
     public static class Builder {
 
-        private String path;
+        private String path = null;
+        private List<String> lore = null;
         private HashMap<String, String> replaceList = new HashMap<>();
         private boolean addPredix = false;
 
         private final FileConfiguration config = SCPlugin.getInstance().getConfig();
+
+        public Builder() { }
+
+        public Builder(List<String> lore) {
+            this.lore = lore;
+        }
 
         public Builder path(String path) {
             this.path = path;
@@ -52,7 +60,7 @@ public abstract class Color {
         }
 
         public ArrayList<String> buildLore() {
-            List<String> loreList = config.getStringList(path);
+            List<String> loreList = (lore == null ? config.getStringList(path) : lore);
             ArrayList<String> returnLore = new ArrayList<>();
             for (String lore : loreList) {
                 for (String replace : replaceList.keySet()) {
