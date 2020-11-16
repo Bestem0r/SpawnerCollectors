@@ -24,9 +24,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Collector {
 
@@ -34,7 +32,7 @@ public class Collector {
     private final FileConfiguration config;
     private final OfflinePlayer owner;
 
-    private final List<CollectorEntity> collectorEntities = new ArrayList<>();
+    private final List<EntityCollector> collectorEntities = new ArrayList<>();
 
     private Inventory spawnerMenu;
     private Inventory entityMenu;
@@ -54,7 +52,7 @@ public class Collector {
             for (String entityKey : entitySection.getKeys(false)) {
                 int entityAmount = config.getInt("entities." + entityKey);
                 int spawnerAmount = config.getInt("spawners." + entityKey);
-                collectorEntities.add(new CollectorEntity(EntityType.valueOf(entityKey), entityAmount, spawnerAmount));
+                collectorEntities.add(new EntityCollector(EntityType.valueOf(entityKey), entityAmount, spawnerAmount));
             }
         }
     }
@@ -69,6 +67,11 @@ public class Collector {
         if (slot == 48) {
             event.getView().close();
             openEntityMenu(player);
+            return;
+        }
+        if (slot == 49) {
+            sellAll(player);
+            updateSpawnerMenu();
             return;
         }
         if (slot == 50) {
@@ -89,14 +92,16 @@ public class Collector {
                 player.getInventory().setItem(event.getSlot(), null);
                 player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.add_spawner")), 1, 1);
 
-                for (CollectorEntity spawner : collectorEntities) {
+                for (EntityCollector spawner : collectorEntities) {
                     if (spawner.getEntityType() == entityType) {
                         spawner.addSpawner(currentItem.getAmount());
                         updateSpawnerMenu();
                         return;
                     }
                 }
-                collectorEntities.add(new CollectorEntity(entityType, 0, currentItem.getAmount()));
+                collectorEntities.add(new EntityCollector(entityType, 0, currentItem.getAmount()));
+                String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")) + " Spawner";
+                SCPlugin.log.add(new Date().toString() + ": " + player.getName() + " added " + currentItem.getAmount() + " " + spawnerName);
                 updateSpawnerMenu();
             }
         }
@@ -104,17 +109,21 @@ public class Collector {
         if (slot < 54) {
             if (slot >= collectorEntities.size() || slot < 0) { return; }
 
-            CollectorEntity collected = collectorEntities.get(slot);
+            EntityCollector collected = collectorEntities.get(slot);
             if (collected == null) { return; }
 
             int withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
 
             ItemStack spawner = spawnerFromType(collected.getEntityType(), withdrawAmount);
             ItemMeta meta = spawner.getItemMeta();
-            meta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(collected.getEntityType().name().replaceAll("_", " ")) + " Spawner");
+            String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(collected.getEntityType().name().replaceAll("_", " ")) + " Spawner";
+            meta.setDisplayName(spawnerName);
             spawner.setItemMeta(meta);
 
-            player.getInventory().addItem(spawner);
+            HashMap<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
+            for (int i : drop.keySet()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
+            }
             collected.removeSpawners(withdrawAmount);
 
             if (collected.getSpawnerAmount() < 1) {
@@ -123,6 +132,7 @@ public class Collector {
             }
 
             player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.withdraw")), 1, 1);
+            SCPlugin.log.add(new Date().toString() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + spawnerName);
             updateSpawnerMenu();
         }
     }
@@ -137,6 +147,11 @@ public class Collector {
             openSpawnerMenu(player);
             return;
         }
+        if (slot == 49) {
+            sellAll(player);
+            updateEntityMenu();
+            return;
+        }
         if (slot == 50) {
             toggleAutoSell();
             updateEntityMenu();
@@ -146,7 +161,7 @@ public class Collector {
         if (slot >= collectorEntities.size() || slot < 0) {
             return;
         }
-        CollectorEntity collected = collectorEntities.get(slot);
+        EntityCollector collected = collectorEntities.get(slot);
         if (collected == null) { return; }
 
 
@@ -159,17 +174,36 @@ public class Collector {
             int withdrawAmount = Math.min(collected.getEntityAmount(), 64);
             collected.removeEntities(withdrawAmount);
             for (ItemStack itemStack : Methods.lootFromType(collected.getEntityType(), player, withdrawAmount)) {
-                player.getInventory().addItem(itemStack);
+                HashMap<Integer, ItemStack> drop = player.getInventory().addItem(itemStack);
+                for (int i : drop.keySet()) {
+                    player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
+                }
             }
             player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.withdraw")), 1, 1);
         }
         updateEntityMenu();
     }
 
-    /** Sells all entities from collected */
-    private void sell(Player player, CollectorEntity collected) {
+    /** Sells every collected entity in every collected */
+    private void sellAll(Player player) {
         Economy economy = SCPlugin.getEconomy();
-        economy.depositPlayer(player, SCPlugin.prices.get(collected.getEntityType()) * collected.getEntityAmount());
+        double total = 0;
+        for (EntityCollector collected : collectorEntities) {
+            total += collected.getTotalWorth();
+            collected.removeEntities(collected.getEntityAmount());
+        }
+        economy.depositPlayer(player, total);
+
+        player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.sell")), 1, 1);
+        player.sendMessage(new Color.Builder().path("messages.sell_all")
+                .replaceWithCurrency("%worth%", String.valueOf(total))
+                .addPrefix().build());
+    }
+
+    /** Sells all entities from specified collected */
+    private void sell(Player player, EntityCollector collected) {
+        Economy economy = SCPlugin.getEconomy();
+        economy.depositPlayer(player, collected.getTotalWorth());
 
         player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.sell")), 1, 1);
         player.sendMessage(new Color.Builder().path("messages.sell")
@@ -211,8 +245,8 @@ public class Collector {
 
     /** Attempts to spawn virtual mobs */
     public void attemptSpawn() {
-        for (CollectorEntity collectorEntity : collectorEntities) {
-            collectorEntity.attemptSpawn(autoSell, owner);
+        for (EntityCollector entityCollector : collectorEntities) {
+            entityCollector.attemptSpawn(autoSell, owner);
         }
         updateEntityMenuIfView();
     }
@@ -254,7 +288,9 @@ public class Collector {
 
     /** Updates content of entity menu */
     private void updateEntityMenu() {
-        this.entityMenu.setContents(EntityMenu.create(collectorEntities, autoSell).getContents());
+        if (entityMenu != null) {
+            this.entityMenu.setContents(EntityMenu.create(collectorEntities, autoSell).getContents());
+        }
     }
 
     /** Updates spawner menu if a player is currently viewing it */
@@ -270,7 +306,7 @@ public class Collector {
     public void save() {
         config.set("spawners", "");
         config.set("entities", "");
-        for (CollectorEntity spawner : collectorEntities) {
+        for (EntityCollector spawner : collectorEntities) {
             config.set("spawners." + spawner.getEntityType().name(), spawner.getSpawnerAmount());
             config.set("entities." + spawner.getEntityType().name(), spawner.getEntityAmount());
         }

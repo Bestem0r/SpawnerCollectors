@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class CollectorEntity {
+public class EntityCollector {
 
     private final EntityType entityType;
 
@@ -28,7 +28,7 @@ public class CollectorEntity {
     private final List<String> spawnerLore;
     private final List<String> entityLore;
 
-    public CollectorEntity(EntityType entityType, int entityAmount, int spawnerAmount) {
+    public EntityCollector(EntityType entityType, int entityAmount, int spawnerAmount) {
         this.entityType = entityType;
 
         FileConfiguration mainConfig = SCPlugin.getInstance().getConfig();
@@ -107,7 +107,7 @@ public class CollectorEntity {
 
     /** Returns total worth (double) of the mobs collected */
     public double getTotalWorth() {
-        return SCPlugin.prices.get(entityType).byteValue() * entityAmount;
+        return Math.round(SCPlugin.prices.get(entityType) * entityAmount * 100.0) / 100.0;
     }
 
     /** Getters */

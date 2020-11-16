@@ -1,6 +1,6 @@
 package me.bestem0r.spawnercollectors.menus;
 
-import me.bestem0r.spawnercollectors.CollectorEntity;
+import me.bestem0r.spawnercollectors.EntityCollector;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utilities.Color;
 import org.bukkit.Bukkit;
@@ -13,13 +13,15 @@ import java.util.List;
 
 public abstract class SpawnerMenu {
 
-    public static Inventory create(List<CollectorEntity> collectorEntities, boolean autoSell) {
+    public static Inventory create(List<EntityCollector> collected, boolean autoSell) {
         Inventory inventory = Bukkit.createInventory(null, 54, new Color.Builder().path("menus.spawners.title").build());
         ItemStack[] items = new ItemStack[54];
+        double totalWorth = 0;
 
-        for (int i = 0; i < collectorEntities.size(); i++) {
+        for (int i = 0; i < collected.size(); i++) {
             if (i == 54) { break; }
-            items[i] = collectorEntities.get(i).getSpawnerItem();
+            items[i] = collected.get(i).getSpawnerItem();
+            totalWorth += collected.get(i).getTotalWorth();
         }
 
         FileConfiguration config = SCPlugin.getInstance().getConfig();
@@ -37,6 +39,13 @@ public abstract class SpawnerMenu {
                 .lore(new Color.Builder().path("menus.items.mobs.lore").buildLore())
                 .build();
         items[48] = switchMenu;
+
+        ItemStack sellAll = new MenuItem.Builder(Material.valueOf(config.getString("menus.items.sell_all.material")))
+                .nameFromPath("menus.items.sell_all.name")
+                .lore(new Color.Builder().path("menus.items.sell_all.lore")
+                        .replaceWithCurrency("%worth%", String.valueOf(totalWorth)).buildLore())
+                .build();
+        items[49] = sellAll;
 
         ItemStack autoSellItem = new MenuItem.Builder(Material.valueOf(config.getString("menus.items.auto_sell_" + autoSell + ".material")))
                 .nameFromPath("menus.items.auto_sell_" + autoSell + ".name")
