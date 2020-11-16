@@ -11,6 +11,8 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityTameEvent;
@@ -18,7 +20,9 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -31,8 +35,9 @@ public class SCPlugin extends JavaPlugin {
     public static HashMap<EntityType, Double> prices = new HashMap<>();
     public static HashMap<EntityType, String> materials = new HashMap<>();
 
-    private static final HashMap<OfflinePlayer, Double> earned = new HashMap<>();
+    public static List<String> log = new ArrayList<>();
 
+    private static final HashMap<OfflinePlayer, Double> earned = new HashMap<>();
     private static boolean usingHeadDB;
 
     @Override
@@ -60,7 +65,7 @@ public class SCPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         super.onDisable();
-
+        saveLog();
         for (Collector collector : collectors) {
             collector.save();
         }
@@ -72,12 +77,29 @@ public class SCPlugin extends JavaPlugin {
     private void loadValues() {
         usingHeadDB = getConfig().getBoolean("use_headdb");
         loadEntities();
-        //loadCollectors();
+    }
+
+    /** Saves log */
+    private void saveLog() {
+        if (getConfig().getBoolean("log")) {
+            Date date = new Date();
+            String fileName = date.toString().replace(":","-");
+            File file = new File(Bukkit.getServer().getPluginManager().getPlugin("SpawnerCollectors").getDataFolder() + "/logs/" + fileName + ".yml");
+            FileConfiguration logConfig = YamlConfiguration.loadConfiguration(file);
+            logConfig.set("log", log);
+
+            try {
+                logConfig.save(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /** Reloads config values */
     public void reloadValues() {
         Bukkit.getScheduler().cancelTasks(this);
+        saveLog();
         prices.clear();
         materials.clear();
         loadEntities();
@@ -105,8 +127,9 @@ public class SCPlugin extends JavaPlugin {
                     Player player = offlinePlayer.getPlayer();
                     if (player == null) { continue; }
 
+                    double playerEarned = Math.round(earned.get(offlinePlayer) * 100.0) / 100.0;
                     player.sendMessage(new Color.Builder().path("messages.earned_notify")
-                            .replaceWithCurrency("%worth%", String.valueOf(earned.get(offlinePlayer)))
+                            .replaceWithCurrency("%worth%", String.valueOf(playerEarned))
                             .replace("%time%", String.valueOf(minutes))
                             .addPrefix()
                             .build());

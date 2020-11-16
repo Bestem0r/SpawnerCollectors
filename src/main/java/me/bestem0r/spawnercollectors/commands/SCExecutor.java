@@ -2,6 +2,7 @@ package me.bestem0r.spawnercollectors.commands;
 
 import me.bestem0r.spawnercollectors.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
+import me.bestem0r.spawnercollectors.utilities.Color;
 import me.bestem0r.spawnercollectors.utilities.Methods;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -18,11 +19,13 @@ public class SCExecutor implements CommandExecutor {
             if (args.length != 1) { return false; }
 
             if (args[0].equalsIgnoreCase("reload")) {
-                if (player.hasPermission("spawnercollectors.reload")) {
+                if (!player.hasPermission("spawnercollectors.reload")) {
                     player.sendMessage(ChatColor.RED + "You do not have permissions for this command!");
                     return true;
                 }
                 SCPlugin.getInstance().reloadValues();
+                player.sendMessage(new Color.Builder().path("messages.plugin_reloaded").addPrefix().build());
+                return true;
             }
 
             if (!player.hasPermission("spawnercollectors.use")) {

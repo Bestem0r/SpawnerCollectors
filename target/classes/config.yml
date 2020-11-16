@@ -10,13 +10,17 @@ notify_interval: 1
 currency: '$'
 #Should the currency symbol be placed before the price?
 currency_before: false
+#Should an action log be saved on plugin/server reload?
+log: true
 
 #----------------- Messages and sounds -----------------#
 
 messages:
   earned_notify: "&7Earned &a%worth% &7the past &e%time% minutes &7from auto selling spawners!" #Placeholders: %worth%, %time%
-  sell: "&7Sold mobs for &a%worth%!"
+  sell: "&7Sold mobs for &a%worth%&7!" #Placeholders: %worth%
+  sell_all: "&7Sold everything for a total of &a%worth%&7!"
   not_supported: "&cThis entity type is not yet supported! Please contact an administrator!"
+  plugin_reloaded: "&aPlugin reloaded!"
 
 sounds:
   spawners_open: BLOCK_CHEST_OPEN
@@ -55,9 +59,8 @@ menus:
       material: LIME_TERRACOTTA
       name: "&aAuto-sell enabled"
       lore:
-         - "&7>> Click to &cdisable"
+        - "&7>> Click to &cdisable"
         - "&7auto-sell for mobs collected!"
-      
     auto_sell_false:
       material: RED_TERRACOTTA
       name: "&cAuto-sell disabled"
@@ -81,6 +84,14 @@ menus:
       lore:
         - "&7>> Click to switch"
         - "&7to spawners view!"
+    sell_all:
+      material: GOLD_INGOT
+      name: "&aSell all"
+      lore:
+        - "&7Total worth: &a%worth%"
+        - ""
+        - "&7>> Click to &asell &7all"
+        - "&7collected mobs!"
 
 
 #--------------------- Mob prices ---------------------#
