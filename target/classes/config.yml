@@ -12,6 +12,12 @@ currency: '$'
 currency_before: false
 #Should an action log be saved on plugin/server reload?
 log: true
+#Require permissions for sell, withdraw, auto-sell
+#The permissions are:
+# - spawnercollectors.sell,
+# - spawnercollectors.auto_sell,
+# - spawnercollectors.withdraw
+more_permissions: false
 
 #----------------- Messages and sounds -----------------#
 
@@ -21,6 +27,9 @@ messages:
   sell_all: "&7Sold everything for a total of &a%worth%&7!"
   not_supported: "&cThis entity type is not yet supported! Please contact an administrator!"
   plugin_reloaded: "&aPlugin reloaded!"
+  no_permission_sell: "&cYou do not have permission to sell mobs!"
+  no_permission_withdraw: "&cYou do not have permission to withdraw mobs!"
+  no_permission_auto-sell: "&cYou do not have permission to auto-sell!"
 
 sounds:
   spawners_open: BLOCK_CHEST_OPEN
@@ -95,13 +104,17 @@ menus:
 
 
 #--------------------- Mob prices ---------------------#
+
+#Per mob worth. Remember to also set a material for each mob!
 prices:
   SKELETON: 50
   ZOMBIE: 10
 
 #--------------------- Mob materials ---------------------#
-use_headdb: false
 
+#Use HeadDatabase IDs instead of vanilla material IDs.
+#If you enable this, be sure to change the material for all mobs!
+use_headdb: false
 materials:
   SKELETON: SKELETON_SPAWN_EGG
   ZOMBIE: ZOMBIE_SPAWN_EGG

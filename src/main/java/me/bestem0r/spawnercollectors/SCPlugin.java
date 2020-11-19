@@ -5,6 +5,7 @@ import me.bestem0r.spawnercollectors.commands.SCExecutor;
 import me.bestem0r.spawnercollectors.events.Join;
 import me.bestem0r.spawnercollectors.events.Quit;
 import me.bestem0r.spawnercollectors.utilities.Color;
+import me.bestem0r.spawnercollectors.utilities.MetricsLite;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -45,8 +46,11 @@ public class SCPlugin extends JavaPlugin {
         super.onEnable();
         instance = this;
 
+        MetricsLite metricsLite = new MetricsLite(this, 9427);
+
         getConfig().options().copyDefaults();
         saveDefaultConfig();
+        reloadConfig();
 
         Bukkit.getPluginManager().registerEvents(new Join(), this);
         Bukkit.getPluginManager().registerEvents(new Quit(), this);
@@ -76,6 +80,10 @@ public class SCPlugin extends JavaPlugin {
     /** Loads values from config */
     private void loadValues() {
         usingHeadDB = getConfig().getBoolean("use_headdb");
+        if (usingHeadDB && !Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
+            Bukkit.getLogger().severe("[SpawnerCollectors] Could not find HeadDatabase. Defaulting to material IDs!");
+            usingHeadDB = false;
+        }
         loadEntities();
     }
 
@@ -98,6 +106,8 @@ public class SCPlugin extends JavaPlugin {
 
     /** Reloads config values */
     public void reloadValues() {
+        reloadConfig();
+
         Bukkit.getScheduler().cancelTasks(this);
         saveLog();
         prices.clear();

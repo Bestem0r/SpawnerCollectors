@@ -71,13 +71,10 @@ public class Collector {
         }
         if (slot == 49) {
             sellAll(player);
-            updateSpawnerMenu();
             return;
         }
         if (slot == 50) {
-            toggleAutoSell();
-            updateSpawnerMenu();
-            player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.toggle_auto_sell")), 1, 1);
+            toggleAutoSell(player);
             return;
         }
         //Add spawner
@@ -114,11 +111,7 @@ public class Collector {
 
             int withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
 
-            ItemStack spawner = spawnerFromType(collected.getEntityType(), withdrawAmount);
-            ItemMeta meta = spawner.getItemMeta();
-            String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(collected.getEntityType().name().replaceAll("_", " ")) + " Spawner";
-            meta.setDisplayName(spawnerName);
-            spawner.setItemMeta(meta);
+            ItemStack spawner = Methods.spawnerFromType(collected.getEntityType(), withdrawAmount);
 
             HashMap<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
             for (int i : drop.keySet()) {
@@ -132,7 +125,7 @@ public class Collector {
             }
 
             player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.withdraw")), 1, 1);
-            SCPlugin.log.add(new Date().toString() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + spawnerName);
+            SCPlugin.log.add(new Date().toString() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + collected.getEntityType() + " Spawner");
             updateSpawnerMenu();
         }
     }
@@ -149,13 +142,10 @@ public class Collector {
         }
         if (slot == 49) {
             sellAll(player);
-            updateEntityMenu();
             return;
         }
         if (slot == 50) {
-            toggleAutoSell();
-            updateEntityMenu();
-            player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.toggle_auto_sell")), 1, 1);
+            toggleAutoSell(player);
             return;
         }
         if (slot >= collectorEntities.size() || slot < 0) {
@@ -171,6 +161,12 @@ public class Collector {
         }
         //Withdraw
         if (event.getClick() == ClickType.RIGHT) {
+
+            boolean morePermissions = SCPlugin.getInstance().getConfig().getBoolean("more_permissions");
+            if (morePermissions && !player.hasPermission("spawnercollectors.withdraw")) {
+                player.sendMessage(new Color.Builder().path("messages.no_permission_withdraw").addPrefix().build());
+                return;
+            }
             int withdrawAmount = Math.min(collected.getEntityAmount(), 64);
             collected.removeEntities(withdrawAmount);
             for (ItemStack itemStack : Methods.lootFromType(collected.getEntityType(), player, withdrawAmount)) {
@@ -180,12 +176,18 @@ public class Collector {
                 }
             }
             player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.withdraw")), 1, 1);
+            updateEntityMenu();
         }
-        updateEntityMenu();
     }
 
     /** Sells every collected entity in every collected */
     private void sellAll(Player player) {
+        boolean morePermissions = SCPlugin.getInstance().getConfig().getBoolean("more_permissions");
+        if (morePermissions && !player.hasPermission("spawnercollectors.sell")) {
+            player.sendMessage(new Color.Builder().path("messages.no_permission_sell").addPrefix().build());
+            return;
+        }
+
         Economy economy = SCPlugin.getEconomy();
         double total = 0;
         for (EntityCollector collected : collectorEntities) {
@@ -198,10 +200,18 @@ public class Collector {
         player.sendMessage(new Color.Builder().path("messages.sell_all")
                 .replaceWithCurrency("%worth%", String.valueOf(total))
                 .addPrefix().build());
+
+        updateSpawnerMenuIfView();
+        updateEntityMenuIfView();
     }
 
     /** Sells all entities from specified collected */
     private void sell(Player player, EntityCollector collected) {
+        boolean morePermissions = SCPlugin.getInstance().getConfig().getBoolean("more_permissions");
+        if (morePermissions && !player.hasPermission("spawnercollectors.sell")) {
+            player.sendMessage(new Color.Builder().path("messages.no_permission_sell").addPrefix().build());
+            return;
+        }
         Economy economy = SCPlugin.getEconomy();
         economy.depositPlayer(player, collected.getTotalWorth());
 
@@ -227,34 +237,29 @@ public class Collector {
             return null;
         }
     }
-    /** Returns spawner with set EntityType */
-    private ItemStack spawnerFromType(EntityType entityType, int amount) {
-        ItemStack itemStack = new ItemStack(Material.SPAWNER, amount);
-
-        //Lots of more casting...
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        BlockStateMeta blockStateMeta = (BlockStateMeta) itemMeta;
-        BlockState blockState = blockStateMeta.getBlockState();
-        CreatureSpawner spawner = (CreatureSpawner) blockState;
-        spawner.setSpawnedType(entityType);
-        blockStateMeta.setBlockState(blockState);
-
-        itemStack.setItemMeta(itemMeta);
-        return itemStack;
-    }
 
     /** Attempts to spawn virtual mobs */
     public void attemptSpawn() {
         for (EntityCollector entityCollector : collectorEntities) {
             entityCollector.attemptSpawn(autoSell, owner);
         }
+        updateSpawnerMenuIfView();
         updateEntityMenuIfView();
     }
 
     /** Toggles auto-sell */
-    private void toggleAutoSell() {
+    private void toggleAutoSell(Player player) {
+        boolean morePermissions = SCPlugin.getInstance().getConfig().getBoolean("more_permissions");
+        if (morePermissions && !player.hasPermission("spawnercollectors.auto_sell")) {
+            player.sendMessage(new Color.Builder().path("messages.no_permission_auto-sell").addPrefix().build());
+            return;
+        }
+
         autoSell = !autoSell;
-        updateEntityMenu();
+
+        updateEntityMenuIfView();
+        updateSpawnerMenuIfView();
+        player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.toggle_auto_sell")), 1, 1);
     }
 
     /** Returns spawner Inventory */
@@ -286,6 +291,15 @@ public class Collector {
         this.spawnerMenu.setContents(SpawnerMenu.create(collectorEntities, autoSell).getContents());
     }
 
+    /** Updates spawner menu if a player is currently viewing it */
+    private void updateSpawnerMenuIfView() {
+        if (spawnerMenu != null) {
+            if (spawnerMenu.getViewers().size() > 0) {
+                updateSpawnerMenu();
+            }
+        }
+    }
+
     /** Updates content of entity menu */
     private void updateEntityMenu() {
         if (entityMenu != null) {
@@ -293,7 +307,7 @@ public class Collector {
         }
     }
 
-    /** Updates spawner menu if a player is currently viewing it */
+    /** Updates entity menu if a player is currently viewing it */
     private void updateEntityMenuIfView() {
         if (entityMenu != null) {
             if (entityMenu.getViewers().size() > 0) {
