@@ -2,15 +2,21 @@ package me.bestem0r.spawnercollectors.utilities;
 
 import me.bestem0r.spawnercollectors.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.CreatureSpawner;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.Lootable;
@@ -82,5 +88,24 @@ public abstract class Methods {
             loot.addAll(lootTable.populateLoot(ThreadLocalRandom.current(), context));
         }
         return loot;
+    }
+
+    /** Returns spawner with set EntityType */
+    public static ItemStack spawnerFromType(EntityType entityType, int amount) {
+        ItemStack itemStack = new ItemStack(Material.SPAWNER, amount);
+
+        //Lots of casting...
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        BlockStateMeta blockStateMeta = (BlockStateMeta) itemMeta;
+        BlockState blockState = blockStateMeta.getBlockState();
+        CreatureSpawner spawner = (CreatureSpawner) blockState;
+        spawner.setSpawnedType(entityType);
+        blockStateMeta.setBlockState(blockState);
+
+        String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")) + " Spawner";
+        itemMeta.setDisplayName(spawnerName);
+
+        itemStack.setItemMeta(itemMeta);
+        return itemStack;
     }
 }
