@@ -81,30 +81,19 @@ public class Collector {
         if (slot >= event.getView().getTopInventory().getSize() && currentItem != null) {
             if (currentItem.getType() == Material.SPAWNER) {
                 EntityType entityType = typeFromSpawner(currentItem);
-                if (!SCPlugin.materials.containsKey(entityType)) {
-                    player.sendMessage(new Color.Builder().path("messages.not_supported").addPrefix().build());
-                    return;
+                if (addSpawner(player, entityType, currentItem.getAmount())) {
+                    player.getInventory().setItem(event.getSlot(), null);
                 }
-
-                player.getInventory().setItem(event.getSlot(), null);
-                player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.add_spawner")), 1, 1);
-
-                for (EntityCollector spawner : collectorEntities) {
-                    if (spawner.getEntityType() == entityType) {
-                        spawner.addSpawner(currentItem.getAmount());
-                        updateSpawnerMenu();
-                        return;
-                    }
-                }
-                collectorEntities.add(new EntityCollector(entityType, 0, currentItem.getAmount()));
-                String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")) + " Spawner";
-                SCPlugin.log.add(new Date().toString() + ": " + player.getName() + " added " + currentItem.getAmount() + " " + spawnerName);
-                updateSpawnerMenu();
             }
         }
         //Withdraw spawner
         if (slot < 54) {
             if (slot >= collectorEntities.size() || slot < 0) { return; }
+            boolean morePermissions = SCPlugin.getInstance().getConfig().getBoolean("more_permissions");
+            if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.spawner")) {
+                player.sendMessage(new Color.Builder().path("messages.no_permission_withdraw_spawner").addPrefix().build());
+                return;
+            }
 
             EntityCollector collected = collectorEntities.get(slot);
             if (collected == null) { return; }
@@ -125,9 +114,32 @@ public class Collector {
             }
 
             player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.withdraw")), 1, 1);
-            SCPlugin.log.add(new Date().toString() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + collected.getEntityType() + " Spawner");
+            SCPlugin.log.add(ChatColor.stripColor(new Date().toString() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + collected.getEntityType() + " Spawner"));
             updateSpawnerMenu();
         }
+    }
+
+    /** Adds spawner */
+    public boolean addSpawner(Player player, EntityType entityType, int amount) {
+        if (!SCPlugin.materials.containsKey(entityType)) {
+            player.sendMessage(new Color.Builder().path("messages.not_supported").addPrefix().build());
+            return false;
+        }
+
+        player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.add_spawner")), 1, 1);
+
+        String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")) + " Spawner";
+        SCPlugin.log.add(ChatColor.stripColor(new Date().toString() + ": " + player.getName() + " added " + amount + " " + spawnerName + " to " + owner.getName() + "' collector!"));
+        for (EntityCollector spawner : collectorEntities) {
+            if (spawner.getEntityType() == entityType) {
+                spawner.addSpawner(amount);
+                updateSpawnerMenu();
+                return true;
+            }
+        }
+        collectorEntities.add(new EntityCollector(entityType, 0, amount));
+        updateSpawnerMenu();
+        return true;
     }
 
     /** Runs when player interacts with entity menu */
@@ -163,8 +175,8 @@ public class Collector {
         if (event.getClick() == ClickType.RIGHT) {
 
             boolean morePermissions = SCPlugin.getInstance().getConfig().getBoolean("more_permissions");
-            if (morePermissions && !player.hasPermission("spawnercollectors.withdraw")) {
-                player.sendMessage(new Color.Builder().path("messages.no_permission_withdraw").addPrefix().build());
+            if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.mob")) {
+                player.sendMessage(new Color.Builder().path("messages.no_permission_withdraw_mob").addPrefix().build());
                 return;
             }
             int withdrawAmount = Math.min(collected.getEntityAmount(), 64);
@@ -222,6 +234,9 @@ public class Collector {
                 .build());
 
         collected.removeEntities(collected.getEntityAmount());
+        updateEntityMenuIfView();
+        updateSpawnerMenuIfView();
+
     }
 
     /** Returns entityType based on spawner itemStack */
@@ -288,6 +303,7 @@ public class Collector {
 
     /** Updates content of spawner menu */
     private void updateSpawnerMenu() {
+        if (spawnerMenu == null) { return; }
         this.spawnerMenu.setContents(SpawnerMenu.create(collectorEntities, autoSell).getContents());
     }
 
@@ -302,9 +318,8 @@ public class Collector {
 
     /** Updates content of entity menu */
     private void updateEntityMenu() {
-        if (entityMenu != null) {
-            this.entityMenu.setContents(EntityMenu.create(collectorEntities, autoSell).getContents());
-        }
+        if (entityMenu == null) { return; }
+        this.entityMenu.setContents(EntityMenu.create(collectorEntities, autoSell).getContents());
     }
 
     /** Updates entity menu if a player is currently viewing it */

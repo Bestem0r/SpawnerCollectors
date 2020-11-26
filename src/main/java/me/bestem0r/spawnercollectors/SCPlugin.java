@@ -107,6 +107,7 @@ public class SCPlugin extends JavaPlugin {
     /** Reloads config values */
     public void reloadValues() {
         reloadConfig();
+        saveDefaultConfig();
 
         Bukkit.getScheduler().cancelTasks(this);
         saveLog();
@@ -174,16 +175,6 @@ public class SCPlugin extends JavaPlugin {
         }
 
         return (econ != null);
-    }
-
-    /** Load collectors from config */
-    private void loadCollectors() {
-        File folder = new File(Bukkit.getPluginManager().getPlugin("SpawnerCollectors").getDataFolder() + "/collectors");
-        if (folder.exists() && folder.isDirectory()) {
-            for (File file : folder.listFiles()) {
-                collectors.add(new Collector(file));
-            }
-        }
     }
 
     /** Getters */

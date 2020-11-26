@@ -87,22 +87,30 @@ public class EntityCollector {
 
     /** Returns ItemStack to display number of entities */
     public ItemStack getEntityItem() {
-        ItemStack item;
-        if (SCPlugin.isUsingHeadDB()) {
-            item = new HeadDatabaseAPI().getItemHead(SCPlugin.materials.get(entityType));
-        } else {
-            item = new ItemStack(Material.valueOf(SCPlugin.materials.get(entityType)));
+        try {
+            ItemStack item;
+            String material = SCPlugin.materials.get(entityType);
+            if (SCPlugin.isUsingHeadDB() && material.startsWith("hdb:")) {
+                item = new HeadDatabaseAPI().getItemHead(material.substring(4));
+            } else {
+                item = new ItemStack(Material.valueOf(material));
+            }
+
+            ItemMeta itemMeta = item.getItemMeta();
+            itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
+
+            itemMeta.setLore(new Color.Builder(entityLore)
+                    .replace("%amount%", String.valueOf(entityAmount))
+                    .replaceWithCurrency("%worth%", String.valueOf(getTotalWorth()))
+                    .buildLore());
+            item.setItemMeta(itemMeta);
+            return item;
+        } catch (Exception e) {
+            Bukkit.getLogger().severe("[SpawnerCollectors] Could not retrieve material for entity '" + entityType + "'! Is it registered in the config?");
+            e.printStackTrace();
+            return null;
         }
 
-        ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
-
-        itemMeta.setLore(new Color.Builder(entityLore)
-                .replace("%amount%", String.valueOf(entityAmount))
-                .replaceWithCurrency("%worth%", String.valueOf(getTotalWorth()))
-                .buildLore());
-        item.setItemMeta(itemMeta);
-        return item;
     }
 
     /** Returns total worth (double) of the mobs collected */
