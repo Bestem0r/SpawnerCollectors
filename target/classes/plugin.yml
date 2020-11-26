@@ -1,5 +1,5 @@
 name: SpawnerCollectors
-version: 1.1.0
+version: 1.2.0
 api-version: 1.13
 main: me.bestem0r.spawnercollectors.SCPlugin
 softdepend: [HeadDatabase, Essentials, CMI]
@@ -8,3 +8,23 @@ commands:
   sc:
     usage: /sc <spawners/mobs/reload>
     aliases: [spawnercollectors]
+permissions:
+  spawnercollectors.reload:
+    description: Use /sc reload
+    default: op
+  spawnercollectors.use:
+    description: Open the GUI
+    default: op
+  spawnercollectors.sell:
+    description: Sell collected mobs
+    default: op
+  spawnercollectors.auto_sell:
+    description: Enable auto-sell
+    default: op
+  spawnercollectors.withdraw.mob:
+    description: Withdraw mobs
+    default: op
+  spawnercollectors.withdraw.spawner:
+    description: Withdraw spawners
+    default: op
+

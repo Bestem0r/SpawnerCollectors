@@ -31,7 +31,7 @@ public abstract class Methods {
 
 
     /** Creates new collector file with default values */
-    public static Collector createCollector(Player player) {
+    private static Collector createCollector(Player player) {
         String uuid = player.getUniqueId().toString();
         File file = new File(Bukkit.getPluginManager().getPlugin("SpawnerCollectors").getDataFolder() + "/collectors/" + uuid + ".yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -102,8 +102,8 @@ public abstract class Methods {
         spawner.setSpawnedType(entityType);
         blockStateMeta.setBlockState(blockState);
 
-        String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")) + " Spawner";
-        itemMeta.setDisplayName(spawnerName);
+        String entityName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " "));
+        itemMeta.setDisplayName(new Color.Builder().path("spawner_withdraw_name").replace("%entity%", entityName).build());
 
         itemStack.setItemMeta(itemMeta);
         return itemStack;

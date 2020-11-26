@@ -51,7 +51,9 @@ public class SCExecutor implements CommandExecutor {
                 if (args.length == 4 && canConvert(args[3])) {
                     amount = Integer.parseInt(args[3]);
                 }
-                target.getInventory().addItem(Methods.spawnerFromType(entityType, amount));
+                Collector collector = Methods.getCollector(target);
+                collector.addSpawner(player, entityType, amount);
+                player.sendMessage(new Color.Builder().path("messages.give_spawner").addPrefix().build());
                 return true;
             }
 

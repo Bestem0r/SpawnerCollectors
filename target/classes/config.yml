@@ -10,13 +10,16 @@ notify_interval: 1
 currency: '$'
 #Should the currency symbol be placed before the price?
 currency_before: false
+#Item name for withdrawn spawners (Placeholder: %entity%)
+spawner_withdraw_name: "&r%entity% Spawner"
 #Should an action log be saved on plugin/server reload?
 log: true
 #Require permissions for sell, withdraw, auto-sell
 #The permissions are:
 # - spawnercollectors.sell,
 # - spawnercollectors.auto_sell,
-# - spawnercollectors.withdraw
+# - spawnercollectors.withdraw.mob
+# - spawnercollectors.withdraw.spawner
 more_permissions: false
 
 #----------------- Messages and sounds -----------------#
@@ -27,8 +30,10 @@ messages:
   sell_all: "&7Sold everything for a total of &a%worth%&7!"
   not_supported: "&cThis entity type is not yet supported! Please contact an administrator!"
   plugin_reloaded: "&aPlugin reloaded!"
+  give_spawner: "&aSpawners successfully given!"
   no_permission_sell: "&cYou do not have permission to sell mobs!"
-  no_permission_withdraw: "&cYou do not have permission to withdraw mobs!"
+  no_permission_withdraw_spawner: "&cYou do not have permission to withdraw spawners!"
+  no_permission_withdraw_mob: "&cYou do not have permission to withdraw mobs!"
   no_permission_auto-sell: "&cYou do not have permission to auto-sell!"
 
 sounds:
@@ -112,9 +117,11 @@ prices:
 
 #--------------------- Mob materials ---------------------#
 
-#Use HeadDatabase IDs instead of vanilla material IDs.
-#If you enable this, be sure to change the material for all mobs!
+#Enable HeadDatabase hook
 use_headdb: false
+#If you want to use HeadDatabase IDs instead of vanilla
+#materials, enable HeadDB above and place 'hdb:' in front
+#of the id! E.g. hdb:10000
 materials:
   SKELETON: SKELETON_SPAWN_EGG
   ZOMBIE: ZOMBIE_SPAWN_EGG
