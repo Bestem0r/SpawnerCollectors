@@ -22,7 +22,7 @@ public class ItemLoot {
     }
 
     public Optional<ItemStack> getRandomLoot() {
-        if (Math.random() > probability) { return Optional.empty(); }
+        if (ThreadLocalRandom.current().nextDouble() > probability) { return Optional.empty(); }
 
         int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
         return Optional.of(new ItemStack(material, amount));

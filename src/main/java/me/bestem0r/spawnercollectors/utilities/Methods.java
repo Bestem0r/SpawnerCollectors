@@ -1,7 +1,10 @@
 package me.bestem0r.spawnercollectors.utilities;
 
+import com.cryptomorin.xseries.XMaterial;
+import com.cryptomorin.xseries.XSound;
 import me.bestem0r.spawnercollectors.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
+import me.bestem0r.spawnercollectors.loot.ItemLoot;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -25,13 +28,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class Methods {
 
 
     /** Creates new collector file with default values */
-    private static Collector createCollector(Player player) {
+    private static Collector createCollector(SCPlugin plugin, Player player) {
         String uuid = player.getUniqueId().toString();
         File file = new File(Bukkit.getPluginManager().getPlugin("SpawnerCollectors").getDataFolder() + "/collectors/" + uuid + ".yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -44,25 +49,51 @@ public abstract class Methods {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Collector collector = new Collector(file);
-        SCPlugin.collectors.add(collector);
+        Collector collector = new Collector(plugin, file);
+        plugin.collectors.add(collector);
         return collector;
     }
 
     /** Returns collector based on Player */
-    public static Collector getCollector(Player player) {
-        for (Collector collector : SCPlugin.collectors) {
+    public static Collector getCollector(SCPlugin plugin, Player player) {
+        for (Collector collector : plugin.collectors) {
             if (collector.getOwner().getUniqueId() == player.getUniqueId()) {
                 return collector;
             }
         }
-        return createCollector(player);
+        return createCollector(plugin, player);
     }
 
 
     /** Get loot from entity type */
-    public static ArrayList<ItemStack> lootFromType(EntityType entityType, Player player, int amount) {
-        ArrayList<ItemStack> loot = new ArrayList<>();
+    public static List<ItemStack> lootFromType(SCPlugin plugin, EntityType entityType, Player player, int amount) {
+        if (plugin.isUsingCustomLoot() && plugin.getCustomLoot().containsKey(entityType)) {
+            return lootFromCustom(plugin, entityType, amount);
+        } else {
+            if (XMaterial.isNewVersion()) {
+                return lootFromVanilla(entityType, player, amount);
+            } else {
+                Bukkit.getLogger().severe("[SpawnerCollectors] Auto-generated loot is not supported for versions below 1.13! Please enable and use custom loot in config!");
+                player.sendMessage(ChatColor.RED + "[SpawnerCollectors] Unable to auto-generate loot for versions below 1.13! Please contact an administrator and check the console!");
+                return new ArrayList<>();
+            }
+        }
+    }
+
+    /** Generates loot from custom loot tables */
+    private static List<ItemStack> lootFromCustom(SCPlugin plugin, EntityType entityType, int amount) {
+        List<ItemStack> loot = new ArrayList<>();
+        for (int i = 0; i < amount; i++) {
+            for (ItemLoot itemLoot : plugin.getCustomLoot().get(entityType)) {
+                itemLoot.getRandomLoot().ifPresent((loot::add));
+            }
+        }
+        return loot;
+    }
+
+    /** Generates loot from vanilla loot tables */
+    private static List<ItemStack> lootFromVanilla(EntityType entityType, Player player, int amount) {
+        List<ItemStack> loot = new ArrayList<>();
         Location location = player.getLocation();
 
         location.setY(location.getY() - 5);
@@ -91,8 +122,8 @@ public abstract class Methods {
     }
 
     /** Returns spawner with set EntityType */
-    public static ItemStack spawnerFromType(EntityType entityType, int amount) {
-        ItemStack itemStack = new ItemStack(Material.SPAWNER, amount);
+    public static ItemStack spawnerFromType(SCPlugin plugin, EntityType entityType, int amount) {
+        ItemStack itemStack = new ItemStack(XMaterial.SPAWNER.parseMaterial(), amount);
 
         //Lots of casting...
         ItemMeta itemMeta = itemStack.getItemMeta();
@@ -103,9 +134,29 @@ public abstract class Methods {
         blockStateMeta.setBlockState(blockState);
 
         String entityName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " "));
-        itemMeta.setDisplayName(new Color.Builder().path("spawner_withdraw_name").replace("%entity%", entityName).build());
+        itemMeta.setDisplayName(new Color.Builder(plugin).path("spawner_withdraw_name").replace("%entity%", entityName).build());
 
         itemStack.setItemMeta(itemMeta);
+        return itemStack;
+    }
+
+    /** Plays sound for Player */
+    public static void playSound(SCPlugin plugin, Player player, String soundPath) {
+        FileConfiguration config = plugin.getConfig();
+        XSound xSound = XSound.matchXSound(config.getString("sounds." + soundPath)).orElse(XSound.UI_BUTTON_CLICK);
+        player.playSound(player.getLocation(), xSound.parseSound(), 1, 1);
+    }
+
+    /** Returns ItemStack from config */
+    public static ItemStack itemFromConfig(SCPlugin plugin, String path) {
+        FileConfiguration config = plugin.getConfig();
+        XMaterial xMaterial = XMaterial.matchXMaterial(config.getString(path + ".material")).orElse(XMaterial.STONE);
+        ItemStack itemStack = xMaterial.parseItem();
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        itemMeta.setDisplayName(new Color.Builder(plugin).path(path + ".name").build());
+        itemMeta.setLore((new Color.Builder(plugin).path(path + ".lore")).buildLore());
+        itemStack.setItemMeta(itemMeta);
+
         return itemStack;
     }
 }

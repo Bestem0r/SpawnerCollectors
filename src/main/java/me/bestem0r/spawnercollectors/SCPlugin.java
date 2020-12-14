@@ -4,7 +4,9 @@ import me.bestem0r.spawnercollectors.commands.SCCompleter;
 import me.bestem0r.spawnercollectors.commands.SCExecutor;
 import me.bestem0r.spawnercollectors.events.Join;
 import me.bestem0r.spawnercollectors.events.Quit;
+import me.bestem0r.spawnercollectors.loot.ItemLoot;
 import me.bestem0r.spawnercollectors.utilities.Color;
+import me.bestem0r.spawnercollectors.utilities.Methods;
 import me.bestem0r.spawnercollectors.utilities.MetricsLite;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -22,29 +24,29 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class SCPlugin extends JavaPlugin {
 
-    private static SCPlugin instance;
-    private static Economy econ;
+    private Economy econ;
 
-    public static List<Collector> collectors = new ArrayList<>();
-    public static HashMap<EntityType, Double> prices = new HashMap<>();
-    public static HashMap<EntityType, String> materials = new HashMap<>();
+    public List<Collector> collectors = new ArrayList<>();
+    public HashMap<EntityType, Double> prices = new HashMap<>();
+    public HashMap<EntityType, String> materials = new HashMap<>();
 
-    public static List<String> log = new ArrayList<>();
+    public List<String> log = new ArrayList<>();
 
-    private static final HashMap<OfflinePlayer, Double> earned = new HashMap<>();
-    private static boolean usingHeadDB;
+    private final HashMap<OfflinePlayer, Double> earned = new HashMap<>();
+    private final EnumMap<EntityType, List<ItemLoot>> customLoot = new EnumMap<>(EntityType.class);
+
+    private boolean usingCustomLoot;
+    private boolean usingHeadDB;
+    private boolean morePermissions;
+    private int maxSpawners;
 
     @Override
     public void onEnable() {
         super.onEnable();
-        instance = this;
 
         MetricsLite metricsLite = new MetricsLite(this, 9427);
 
@@ -52,8 +54,8 @@ public class SCPlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadConfig();
 
-        Bukkit.getPluginManager().registerEvents(new Join(), this);
-        Bukkit.getPluginManager().registerEvents(new Quit(), this);
+        Bukkit.getPluginManager().registerEvents(new Join(this), this);
+        Bukkit.getPluginManager().registerEvents(new Quit(this), this);
 
         setupEconomy();
         loadValues();
@@ -62,7 +64,7 @@ public class SCPlugin extends JavaPlugin {
         startMessages();
 
 
-        getCommand("sc").setExecutor(new SCExecutor());
+        getCommand("sc").setExecutor(new SCExecutor(this));
         getCommand("sc").setTabCompleter(new SCCompleter());
     }
 
@@ -79,11 +81,15 @@ public class SCPlugin extends JavaPlugin {
 
     /** Loads values from config */
     private void loadValues() {
-        usingHeadDB = getConfig().getBoolean("use_headdb");
+        this.usingHeadDB = getConfig().getBoolean("use_headdb");
+        this.usingCustomLoot = getConfig().getBoolean("custom_loot_tables.enable");
+        this.maxSpawners = getConfig().getInt("max_spawners");
+        this.morePermissions = getConfig().getBoolean("more_permissions");
         if (usingHeadDB && !Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
             Bukkit.getLogger().severe("[SpawnerCollectors] Could not find HeadDatabase. Defaulting to material IDs!");
-            usingHeadDB = false;
+            this.usingHeadDB = false;
         }
+        loadCustomLoot();
         loadEntities();
     }
 
@@ -113,7 +119,7 @@ public class SCPlugin extends JavaPlugin {
         saveLog();
         prices.clear();
         materials.clear();
-        loadEntities();
+        loadValues();
 
         startSpawners();
         startMessages();
@@ -139,16 +145,39 @@ public class SCPlugin extends JavaPlugin {
                     if (player == null) { continue; }
 
                     double playerEarned = Math.round(earned.get(offlinePlayer) * 100.0) / 100.0;
-                    player.sendMessage(new Color.Builder().path("messages.earned_notify")
+                    player.sendMessage(new Color.Builder(this).path("messages.earned_notify")
                             .replaceWithCurrency("%worth%", String.valueOf(playerEarned))
                             .replace("%time%", String.valueOf(minutes))
                             .addPrefix()
                             .build());
-                    player.playSound(player.getLocation(), Sound.valueOf(SCPlugin.getInstance().getConfig().getString("sounds.notification")), 1, 1);
+                    Methods.playSound(this, player, "notification");
                 }
             }
             earned.clear();
         }, minutes * 20 * 60, minutes * 20 * 60);
+    }
+
+    /** Loads custom loot tables from config */
+    private void loadCustomLoot() {
+        customLoot.clear();
+        if (!usingCustomLoot) { return; }
+        ConfigurationSection mobs = getConfig().getConfigurationSection("custom_loot_tables.mobs");
+        for (String mob : mobs.getKeys(false)) {
+
+            EntityType entityType = EntityType.valueOf(mob);
+            ConfigurationSection items = getConfig().getConfigurationSection("custom_loot_tables.mobs." + mob);
+            for (String item : items.getKeys(false)) {
+
+                Material material = Material.valueOf(item);
+                double probability = getConfig().getDouble("custom_loot_tables.mobs." + mob + "." + item + ".probability");
+                int min = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".min");
+                int max = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".max");
+
+                List<ItemLoot> loot = (customLoot.containsKey(entityType) ? customLoot.get(entityType) : new ArrayList<>());
+                loot.add(new ItemLoot(material, probability, min, max));
+                customLoot.put(entityType, loot);
+            }
+        }
     }
 
     /** Load entity prices and material strings */
@@ -178,19 +207,27 @@ public class SCPlugin extends JavaPlugin {
     }
 
     /** Getters */
-    public static SCPlugin getInstance() {
-        return instance;
-    }
-    public static Economy getEconomy() {
+    public Economy getEconomy() {
         return econ;
     }
-    public static boolean isUsingHeadDB() {
+    public boolean isUsingHeadDB() {
         return usingHeadDB;
     }
-
+    public boolean isUsingCustomLoot() {
+        return usingCustomLoot;
+    }
+    public EnumMap<EntityType, List<ItemLoot>> getCustomLoot() {
+        return customLoot;
+    }
+    public int getMaxSpawners() {
+        return maxSpawners;
+    }
+    public boolean isMorePermissions() {
+        return morePermissions;
+    }
 
     /** Earned message methods */
-    public static void addEarned(OfflinePlayer player, double amount) {
+    public void addEarned(OfflinePlayer player, double amount) {
         if (earned.containsKey(player)) {
             earned.replace(player, earned.get(player) + amount);
         } else {

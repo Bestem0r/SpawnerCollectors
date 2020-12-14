@@ -6,7 +6,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class CollectedSpawner {
 
-    private Instant nextSpawn = Instant.now().plusSeconds(ThreadLocalRandom.current().nextInt(2, 41));;
+    private Instant nextSpawn = Instant.now().plusSeconds(ThreadLocalRandom.current().nextInt(2, 41));
 
     public int attemptSpawn() {
         if (Instant.now().isAfter(nextSpawn)) {

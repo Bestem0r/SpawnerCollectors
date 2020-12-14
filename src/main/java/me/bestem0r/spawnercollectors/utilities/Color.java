@@ -18,11 +18,14 @@ public abstract class Color {
         private HashMap<String, String> replaceList = new HashMap<>();
         private boolean addPredix = false;
 
-        private final FileConfiguration config = SCPlugin.getInstance().getConfig();
+        private final FileConfiguration config;
 
-        public Builder() { }
+        public Builder(SCPlugin plugin) {
+            this.config = plugin.getConfig();
+        }
 
-        public Builder(List<String> lore) {
+        public Builder(SCPlugin plugin, List<String> lore) {
+            this.config = plugin.getConfig();
             this.lore = lore;
         }
 

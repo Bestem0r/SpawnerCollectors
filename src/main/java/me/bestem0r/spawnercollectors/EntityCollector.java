@@ -1,5 +1,6 @@
 package me.bestem0r.spawnercollectors;
 
+import com.cryptomorin.xseries.XMaterial;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.bestem0r.spawnercollectors.utilities.Color;
 import net.milkbowl.vault.economy.Economy;
@@ -28,10 +29,13 @@ public class EntityCollector {
     private final List<String> spawnerLore;
     private final List<String> entityLore;
 
-    public EntityCollector(EntityType entityType, int entityAmount, int spawnerAmount) {
-        this.entityType = entityType;
+    private final SCPlugin plugin;
 
-        FileConfiguration mainConfig = SCPlugin.getInstance().getConfig();
+    public EntityCollector(SCPlugin plugin, EntityType entityType, int entityAmount, int spawnerAmount) {
+        this.entityType = entityType;
+        this.plugin = plugin;
+
+        FileConfiguration mainConfig = plugin.getConfig();
         this.spawnerLore = mainConfig.getStringList("menus.spawners.item_lore");
         this.entityLore = mainConfig.getStringList("menus.mobs.item_lore");
 
@@ -46,10 +50,10 @@ public class EntityCollector {
 
         int spawned = spawners.stream().mapToInt(CollectedSpawner::attemptSpawn).sum();
         if (autoSell) {
-            Economy economy = SCPlugin.getEconomy();
-            double worth = SCPlugin.prices.get(entityType) * spawned;
+            Economy economy = plugin.getEconomy();
+            double worth = plugin.prices.get(entityType) * spawned;
             economy.depositPlayer(player, worth);
-            SCPlugin.addEarned(player, worth);
+            plugin.addEarned(player, worth);
         } else {
             entityAmount += spawned;
         }
@@ -75,12 +79,12 @@ public class EntityCollector {
 
     /** Returns ItemStack to display number of spawners */
     public ItemStack getSpawnerItem() {
-        ItemStack item = new ItemStack(Material.SPAWNER);
+        ItemStack item = XMaterial.SPAWNER.parseItem();
 
         ItemMeta itemMeta = item.getItemMeta();
         itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
 
-        itemMeta.setLore(new Color.Builder(spawnerLore).replace("%amount%", String.valueOf(spawners.size())).buildLore());
+        itemMeta.setLore(new Color.Builder(plugin, spawnerLore).replace("%amount%", String.valueOf(spawners.size())).buildLore());
         item.setItemMeta(itemMeta);
         return item;
     }
@@ -89,17 +93,19 @@ public class EntityCollector {
     public ItemStack getEntityItem() {
         try {
             ItemStack item;
-            String material = SCPlugin.materials.get(entityType);
-            if (SCPlugin.isUsingHeadDB() && material.startsWith("hdb:")) {
+            String material = plugin.materials.get(entityType);
+            if (plugin.isUsingHeadDB() && material.startsWith("hdb:")) {
                 item = new HeadDatabaseAPI().getItemHead(material.substring(4));
             } else {
-                item = new ItemStack(Material.valueOf(material));
+                XMaterial xMaterial = XMaterial.matchXMaterial(material).orElse(XMaterial.STONE);
+                item = xMaterial.parseItem();
             }
 
             ItemMeta itemMeta = item.getItemMeta();
+
             itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
 
-            itemMeta.setLore(new Color.Builder(entityLore)
+            itemMeta.setLore(new Color.Builder(plugin, entityLore)
                     .replace("%amount%", String.valueOf(entityAmount))
                     .replaceWithCurrency("%worth%", String.valueOf(getTotalWorth()))
                     .buildLore());
@@ -115,7 +121,7 @@ public class EntityCollector {
 
     /** Returns total worth (double) of the mobs collected */
     public double getTotalWorth() {
-        return Math.round(SCPlugin.prices.get(entityType) * entityAmount * 100.0) / 100.0;
+        return Math.round(plugin.prices.get(entityType) * entityAmount * 100.0) / 100.0;
     }
 
     /** Getters */

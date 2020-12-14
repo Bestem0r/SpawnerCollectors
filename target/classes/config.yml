@@ -4,7 +4,7 @@
 prefix: "&8[&eSpawners&8]"
 #How often should the plugin check if new virtual mobs should spawn? (Seconds)
 spawn_interval: 1
-#How often should the players receive a "earned by auto-sell notification"? (seconds)
+#How often should the players receive a "earned by auto-sell notification"? (Minutes)
 notify_interval: 1
 #Currency symbol
 currency: '$'
@@ -12,6 +12,8 @@ currency: '$'
 currency_before: false
 #Item name for withdrawn spawners (Placeholder: %entity%)
 spawner_withdraw_name: "&r%entity% Spawner"
+#Maximum allowed spawner amount per entity type (0 for unlimited)
+max_spawners: 0
 #Should an action log be saved on plugin/server reload?
 log: true
 #Require permissions for sell, withdraw, auto-sell
@@ -31,6 +33,7 @@ messages:
   not_supported: "&cThis entity type is not yet supported! Please contact an administrator!"
   plugin_reloaded: "&aPlugin reloaded!"
   give_spawner: "&aSpawners successfully given!"
+  reached_max_spawners: "&cCould not add spawners because of the max limit (%max%)! Please try again with a lower amount!"
   no_permission_sell: "&cYou do not have permission to sell mobs!"
   no_permission_withdraw_spawner: "&cYou do not have permission to withdraw spawners!"
   no_permission_withdraw_mob: "&cYou do not have permission to withdraw mobs!"
@@ -125,3 +128,31 @@ use_headdb: false
 materials:
   SKELETON: SKELETON_SPAWN_EGG
   ZOMBIE: ZOMBIE_SPAWN_EGG
+
+
+#------------------- Custom loot tables -------------------#
+
+custom_loot_tables:
+  #If you want to use custom loot tables, set this to true
+  enable: false
+  #List all mobs which should use custom loot tables. If a
+  #mob is not listed, it will default to it's vanilla table
+  mobs:
+    #EntityType of mob
+    SKELETON:
+      #Material
+      BONE:
+        #Probability of receiving this item
+        probability: 1.0
+        #Minimum amount
+        min: 1
+        #Maximum amount
+        max: 4
+      ARROW:
+        probability: 0.8
+        min: 3
+        max: 6
+
+
+
+
