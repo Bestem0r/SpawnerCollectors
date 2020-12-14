@@ -9,10 +9,16 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class Quit implements Listener {
 
+    private final SCPlugin plugin;
+
+    public Quit(SCPlugin plugin) {
+        this.plugin = plugin;
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        Collector collector = Methods.getCollector(event.getPlayer());
+        Collector collector = Methods.getCollector(plugin, event.getPlayer());
         collector.save();
-        SCPlugin.collectors.remove(collector);
+        plugin.collectors.remove(collector);
     }
 }
