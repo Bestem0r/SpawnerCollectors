@@ -4,8 +4,9 @@ import com.cryptomorin.xseries.XMaterial;
 import me.bestem0r.spawnercollectors.events.InventoryClick;
 import me.bestem0r.spawnercollectors.menus.EntityMenu;
 import me.bestem0r.spawnercollectors.menus.SpawnerMenu;
-import me.bestem0r.spawnercollectors.utilities.Color;
-import me.bestem0r.spawnercollectors.utilities.Methods;
+import me.bestem0r.spawnercollectors.utils.ColorBuilder;
+import me.bestem0r.spawnercollectors.utils.Database;
+import me.bestem0r.spawnercollectors.utils.Methods;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.*;
@@ -25,13 +26,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Collector {
 
-    private final File file;
-    private final FileConfiguration config;
+    private File file;
+    private FileConfiguration config;
     private final Player owner;
 
     private final List<EntityCollector> collectorEntities = new ArrayList<>();
@@ -40,25 +43,62 @@ public class Collector {
     private Inventory entityMenu;
     
     private final SCPlugin plugin;
+    private Connection connection;
 
     private boolean autoSell;
 
-    public Collector(SCPlugin plugin, File file) {
-        this.file = file;
-        this.config = YamlConfiguration.loadConfiguration(file);
-        this.owner = Bukkit.getPlayer(UUID.fromString(config.getString("owner_uuid")));
-
-        this.autoSell = config.getBoolean("auto_sell");
+    public Collector(SCPlugin plugin, Player player) {
         this.plugin = plugin;
+        this.owner = player;
 
-        //Loads values from config
+        switch (plugin.getStoreMethod()) {
+            case MYSQL:
+                loadMYSQL();
+                break;
+            case YAML:
+                loadYAML();
+        }
+    }
+
+    private void loadYAML() {
+        this.file = new File(plugin.getDataFolder() + "/collectors/" + owner.getUniqueId() + ".yml");
+        this.config = YamlConfiguration.loadConfiguration(file);
+        this.autoSell = config.getBoolean("auto_sell");
+
         ConfigurationSection entitySection = config.getConfigurationSection("entities");
         if (entitySection != null) {
             for (String entityKey : entitySection.getKeys(false)) {
                 int entityAmount = config.getInt("entities." + entityKey);
                 int spawnerAmount = config.getInt("spawners." + entityKey);
-                collectorEntities.add(new EntityCollector(plugin, EntityType.valueOf(entityKey), entityAmount, spawnerAmount));
+                EntityType entityType = EntityType.valueOf(entityKey);
+                collectorEntities.add(new EntityCollector(plugin, entityType, entityAmount, spawnerAmount));
             }
+        }
+    }
+    private void loadMYSQL() {
+        this.connection = Database.getDataBaseConnection();
+        try {
+            String playerQuery = "SELECT * FROM player_data WHERE owner_uuid = '" + owner.getUniqueId().toString() + "'";
+            PreparedStatement preparedPlayerStatement = connection.prepareStatement(playerQuery);
+
+            ResultSet playerResult = preparedPlayerStatement.executeQuery();
+            while (playerResult.next()) {
+                this.autoSell = playerResult.getBoolean("auto_sell");
+            }
+
+            String entityQuery = "SELECT * FROM entity_data WHERE owner_uuid = '" + owner.getUniqueId().toString() + "'";
+            PreparedStatement preparedEntityStatement = connection.prepareStatement(entityQuery);
+
+            ResultSet entitySet = preparedEntityStatement.executeQuery();
+            while (entitySet.next()) {
+                int entityAmount = entitySet.getInt("entity_amount");
+                int spawnerAmount = entitySet.getInt("spawner_amount");
+                EntityType entityType = EntityType.valueOf(entitySet.getString("entity_type"));
+                collectorEntities.add(new EntityCollector(plugin, entityType, entityAmount, spawnerAmount));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -70,8 +110,11 @@ public class Collector {
         ItemStack currentItem = event.getCurrentItem();
 
         if (slot == 48) {
-            event.getView().close();
-            openEntityMenu(player);
+            if (plugin.isMorePermissions() && !player.hasPermission("spawnercollectors.command.mobs")) {
+                player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_command").addPrefix().build());
+            } else {
+                openEntityMenu(player);
+            }
             return;
         }
         if (slot == 49) {
@@ -96,7 +139,7 @@ public class Collector {
             if (slot >= collectorEntities.size() || slot < 0) { return; }
             boolean morePermissions = plugin.isMorePermissions();
             if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.spawner")) {
-                player.sendMessage(new Color.Builder(plugin).path("messages.no_permission_withdraw_spawner").addPrefix().build());
+                player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_withdraw_spawner").addPrefix().build());
                 return;
             }
 
@@ -107,7 +150,7 @@ public class Collector {
 
             ItemStack spawner = Methods.spawnerFromType(plugin, collected.getEntityType(), withdrawAmount);
 
-            HashMap<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
+            Map<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
             for (int i : drop.keySet()) {
                 player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
             }
@@ -127,11 +170,15 @@ public class Collector {
     /** Adds spawner */
     public boolean addSpawner(Player player, EntityType entityType, int amount) {
         if (!plugin.materials.containsKey(entityType) && player != null) {
-            player.sendMessage(new Color.Builder(plugin).path("messages.not_supported").addPrefix().build());
+            player.sendMessage(new ColorBuilder(plugin).path("messages.not_supported").addPrefix().build());
+            return false;
+        }
+        if (player != null && plugin.isMorePermissions() && !player.hasPermission("spawnercollectors.spawner." + entityType.name().toLowerCase())) {
+            player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_mob").addPrefix().build());
             return false;
         }
         if (player != null && plugin.getMaxSpawners() > 0 && plugin.getMaxSpawners() < amount && !owner.hasPermission("spawnercollectors.bypass_limit")) {
-            player.sendMessage(new Color.Builder(plugin)
+            player.sendMessage(new ColorBuilder(plugin)
                     .path("messages.reached_max_spawners")
                     .replace("%max%", String.valueOf(plugin.getMaxSpawners()))
                     .addPrefix().build());
@@ -144,7 +191,7 @@ public class Collector {
         if (optionalCollector.isPresent()) {
             EntityCollector collector = optionalCollector.get();
             if (player != null && plugin.getMaxSpawners() > 0 && plugin.getMaxSpawners() < amount + collector.getSpawnerAmount() && !owner.hasPermission("spawnercollectors.bypass_limit")) {
-                player.sendMessage(new Color.Builder(plugin)
+                player.sendMessage(new ColorBuilder(plugin)
                         .path("messages.reached_max_spawners")
                         .replace("%max%", String.valueOf(plugin.getMaxSpawners()))
                         .addPrefix().build());
@@ -159,7 +206,8 @@ public class Collector {
         String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")) + " Spawner";
         String giverName = (player == null ? "Console" : player.getName());
         plugin.log.add(ChatColor.stripColor(new Date().toString() + ": " + giverName + " added " + amount + " " + spawnerName + " to " + owner.getName() + "'s collector!"));
-        updateSpawnerMenu();
+        updateSpawnerMenuIfView();
+        updateEntityMenuIfView();
         return true;
     }
 
@@ -170,7 +218,11 @@ public class Collector {
         Player player = (Player) event.getWhoClicked();
 
         if (slot == 48) {
-            openSpawnerMenu(player);
+            if (plugin.isMorePermissions() && !player.hasPermission("spawnercollectors.command.spawners")) {
+                player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_command").addPrefix().build());
+            } else {
+                openSpawnerMenu(player);
+            }
             return;
         }
         if (slot == 49) {
@@ -197,7 +249,7 @@ public class Collector {
 
             boolean morePermissions = plugin.isMorePermissions();
             if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.mob")) {
-                player.sendMessage(new Color.Builder(plugin).path("messages.no_permission_withdraw_mob").addPrefix().build());
+                player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_withdraw_mob").addPrefix().build());
                 return;
             }
             int withdrawAmount = Math.min(collected.getEntityAmount(), 64);
@@ -206,7 +258,7 @@ public class Collector {
             }
 
             for (ItemStack itemStack : Methods.lootFromType(plugin, collected.getEntityType(), player, withdrawAmount)) {
-                HashMap<Integer, ItemStack> drop = player.getInventory().addItem(itemStack);
+                Map<Integer, ItemStack> drop = player.getInventory().addItem(itemStack);
                 for (int i : drop.keySet()) {
                     player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
                 }
@@ -220,7 +272,7 @@ public class Collector {
     private void sellAll(Player player) {
         boolean morePermissions = plugin.isMorePermissions();
         if (morePermissions && !player.hasPermission("spawnercollectors.sell")) {
-            player.sendMessage(new Color.Builder(plugin).path("messages.no_permission_sell").addPrefix().build());
+            player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_sell").addPrefix().build());
             return;
         }
 
@@ -233,7 +285,7 @@ public class Collector {
         economy.depositPlayer(player, total);
 
         Methods.playSound(plugin, player, "sell");
-        player.sendMessage(new Color.Builder(plugin).path("messages.sell_all")
+        player.sendMessage(new ColorBuilder(plugin).path("messages.sell_all")
                 .replaceWithCurrency("%worth%", String.valueOf(total))
                 .addPrefix().build());
 
@@ -245,14 +297,14 @@ public class Collector {
     private void sell(Player player, EntityCollector collected) {
         boolean morePermissions = plugin.isMorePermissions();
         if (morePermissions && !player.hasPermission("spawnercollectors.sell")) {
-            player.sendMessage(new Color.Builder(plugin).path("messages.no_permission_sell").addPrefix().build());
+            player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_sell").addPrefix().build());
             return;
         }
         Economy economy = plugin.getEconomy();
         economy.depositPlayer(player, collected.getTotalWorth());
 
         Methods.playSound(plugin, player, "sell");
-        player.sendMessage(new Color.Builder(plugin).path("messages.sell")
+        player.sendMessage(new ColorBuilder(plugin).path("messages.sell")
                 .replaceWithCurrency("%worth%", String.valueOf(collected.getTotalWorth()))
                 .addPrefix()
                 .build());
@@ -290,7 +342,7 @@ public class Collector {
     private void toggleAutoSell(Player player) {
         boolean morePermissions = plugin.isMorePermissions();
         if (morePermissions && !player.hasPermission("spawnercollectors.auto_sell")) {
-            player.sendMessage(new Color.Builder(plugin).path("messages.no_permission_auto-sell").addPrefix().build());
+            player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_auto-sell").addPrefix().build());
             return;
         }
 
@@ -306,7 +358,7 @@ public class Collector {
         if (this.spawnerMenu == null) {
             this.spawnerMenu = SpawnerMenu.create(plugin, collectorEntities, autoSell);
         } else {
-            this.spawnerMenu.setContents(SpawnerMenu.create(plugin, collectorEntities, autoSell).getContents());
+            updateSpawnerMenu();
         }
         player.openInventory(spawnerMenu);
         Methods.playSound(plugin, player, "spawners_open");
@@ -318,7 +370,7 @@ public class Collector {
         if (this.entityMenu == null) {
             this.entityMenu = EntityMenu.create(plugin, collectorEntities, autoSell);
         } else {
-            this.entityMenu.setContents(EntityMenu.create(plugin, collectorEntities, autoSell).getContents());
+            updateEntityMenu();
         }
         player.openInventory(entityMenu);
         Methods.playSound(plugin, player, "mobs_open");
@@ -357,21 +409,54 @@ public class Collector {
 
     /** Saves collector */
     public void save() {
-        config.set("spawners", "");
-        config.set("entities", "");
-        for (EntityCollector spawner : collectorEntities) {
-            config.set("spawners." + spawner.getEntityType().name(), spawner.getSpawnerAmount());
-            config.set("entities." + spawner.getEntityType().name(), spawner.getEntityAmount());
-        }
-        config.set("auto_sell", autoSell);
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            e.printStackTrace();
+        switch (plugin.getStoreMethod()) {
+            case YAML:
+                config.set("spawners", "");
+                config.set("entities", "");
+                for (EntityCollector spawner : collectorEntities) {
+                    config.set("spawners." + spawner.getEntityType().name(), spawner.getSpawnerAmount());
+                    config.set("entities." + spawner.getEntityType().name(), spawner.getEntityAmount());
+                }
+                config.set("auto_sell", autoSell);
+                try {
+                    config.save(file);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case MYSQL:
+                try {
+                    this.connection = Database.getDataBaseConnection();
+                    String update = "replace into player_data (owner_uuid, auto_sell) values ('" + owner.getUniqueId().toString() + "', " + autoSell + ")";
+                    PreparedStatement updateStatement = connection.prepareStatement(update);
+                    updateStatement.execute();
+
+                    String delete = "delete from entity_data where owner_uuid = '" + owner.getUniqueId().toString() + "'";
+                    PreparedStatement deleteStatement = connection.prepareStatement(delete);
+                    deleteStatement.execute();
+
+                    for (EntityCollector spawner : collectorEntities) {
+                        String insert = " insert into entity_data (owner_uuid, entity_type, spawner_amount, entity_amount)"
+                                + " values (?, ?, ?, ?)";
+
+                        PreparedStatement insertStatement = connection.prepareStatement(insert);
+                        insertStatement.setString(1, owner.getUniqueId().toString());
+                        insertStatement.setString(2, spawner.getEntityType().name());
+                        insertStatement.setInt(3, spawner.getSpawnerAmount());
+                        insertStatement.setInt(4, spawner.getEntityAmount());
+
+                        insertStatement.execute();
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            default:
+                throw new IllegalStateException("Invalid data storage method!");
         }
     }
 
-    /** Getters */
     public OfflinePlayer getOwner() {
         return owner;
     }

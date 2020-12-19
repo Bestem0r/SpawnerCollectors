@@ -1,42 +1,49 @@
 package me.bestem0r.spawnercollectors;
 
-import me.bestem0r.spawnercollectors.commands.SCCompleter;
-import me.bestem0r.spawnercollectors.commands.SCExecutor;
+import me.bestem0r.spawnercollectors.commands.CommandModule;
+import me.bestem0r.spawnercollectors.commands.subcommands.GiveSpawnerCommand;
+import me.bestem0r.spawnercollectors.commands.subcommands.MobsCommand;
+import me.bestem0r.spawnercollectors.commands.subcommands.ReloadCommand;
+import me.bestem0r.spawnercollectors.commands.subcommands.SpawnersCommand;
 import me.bestem0r.spawnercollectors.events.Join;
 import me.bestem0r.spawnercollectors.events.Quit;
 import me.bestem0r.spawnercollectors.loot.ItemLoot;
-import me.bestem0r.spawnercollectors.utilities.Color;
-import me.bestem0r.spawnercollectors.utilities.Methods;
-import me.bestem0r.spawnercollectors.utilities.MetricsLite;
+import me.bestem0r.spawnercollectors.utils.ColorBuilder;
+import me.bestem0r.spawnercollectors.utils.Database;
+import me.bestem0r.spawnercollectors.utils.Methods;
 import net.milkbowl.vault.economy.Economy;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
+
+import static me.bestem0r.spawnercollectors.DataStoreMethod.MYSQL;
+import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
 
 public class SCPlugin extends JavaPlugin {
 
     private Economy econ;
 
     public List<Collector> collectors = new ArrayList<>();
-    public HashMap<EntityType, Double> prices = new HashMap<>();
-    public HashMap<EntityType, String> materials = new HashMap<>();
+    public Map<EntityType, Double> prices = new HashMap<>();
+    public Map<EntityType, String> materials = new HashMap<>();
 
     public List<String> log = new ArrayList<>();
 
-    private final HashMap<OfflinePlayer, Double> earned = new HashMap<>();
+    private final Map<OfflinePlayer, Double> earned = new HashMap<>();
     private final EnumMap<EntityType, List<ItemLoot>> customLoot = new EnumMap<>(EntityType.class);
 
     private boolean usingCustomLoot;
@@ -44,11 +51,13 @@ public class SCPlugin extends JavaPlugin {
     private boolean morePermissions;
     private int maxSpawners;
 
+    private DataStoreMethod storeMethod = YAML;
+
     @Override
     public void onEnable() {
         super.onEnable();
 
-        MetricsLite metricsLite = new MetricsLite(this, 9427);
+        Metrics metricsLite = new Metrics(this, 9427);
 
         getConfig().options().copyDefaults();
         saveDefaultConfig();
@@ -60,12 +69,24 @@ public class SCPlugin extends JavaPlugin {
         setupEconomy();
         loadValues();
 
+        if (storeMethod == MYSQL) {
+            Database.setup(this);
+        }
+
         startSpawners();
         startMessages();
 
+        CommandModule commandModule = new CommandModule.Builder(this)
+                .addSubCommand("reload", new ReloadCommand(this))
+                .addSubCommand("mobs", new MobsCommand(this))
+                .addSubCommand("spawners", new SpawnersCommand(this))
+                .addSubCommand("givespawner", new GiveSpawnerCommand(this))
+                .build();
+        commandModule.register("sc");
 
-        getCommand("sc").setExecutor(new SCExecutor(this));
-        getCommand("sc").setTabCompleter(new SCCompleter());
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            collectors.add(new Collector(this, player));
+        }
     }
 
     @Override
@@ -74,6 +95,13 @@ public class SCPlugin extends JavaPlugin {
         saveLog();
         for (Collector collector : collectors) {
             collector.save();
+        }
+        if (storeMethod == MYSQL) {
+            try {
+                Database.getDataBaseConnection().close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
 
         Bukkit.getScheduler().cancelTasks(this);
@@ -85,6 +113,7 @@ public class SCPlugin extends JavaPlugin {
         this.usingCustomLoot = getConfig().getBoolean("custom_loot_tables.enable");
         this.maxSpawners = getConfig().getInt("max_spawners");
         this.morePermissions = getConfig().getBoolean("more_permissions");
+        this.storeMethod = DataStoreMethod.valueOf(getConfig().getString("data_storage_method"));
         if (usingHeadDB && !Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
             Bukkit.getLogger().severe("[SpawnerCollectors] Could not find HeadDatabase. Defaulting to material IDs!");
             this.usingHeadDB = false;
@@ -98,7 +127,7 @@ public class SCPlugin extends JavaPlugin {
         if (getConfig().getBoolean("log")) {
             Date date = new Date();
             String fileName = date.toString().replace(":","-");
-            File file = new File(Bukkit.getServer().getPluginManager().getPlugin("SpawnerCollectors").getDataFolder() + "/logs/" + fileName + ".yml");
+            File file = new File(this.getDataFolder() + "/logs/" + fileName + ".yml");
             FileConfiguration logConfig = YamlConfiguration.loadConfiguration(file);
             logConfig.set("log", log);
 
@@ -111,9 +140,17 @@ public class SCPlugin extends JavaPlugin {
     }
 
     /** Reloads config values */
-    public void reloadValues() {
+    public void reloadValues(){
         reloadConfig();
         saveDefaultConfig();
+
+        if (getStoreMethod() == MYSQL) {
+            try {
+                Database.getDataBaseConnection().close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
         Bukkit.getScheduler().cancelTasks(this);
         saveLog();
@@ -121,13 +158,17 @@ public class SCPlugin extends JavaPlugin {
         materials.clear();
         loadValues();
 
+        if (storeMethod == MYSQL) {
+            Database.setup(this);
+        }
+
         startSpawners();
         startMessages();
     }
 
     /** Starts async thread to replicate spawner mechanics */
     private void startSpawners() {
-        long timer = 20 * getConfig().getInt("spawn_interval");
+        long timer = 20L * getConfig().getInt("spawn_interval");
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             for (Collector collector : collectors) {
                 collector.attemptSpawn();
@@ -145,7 +186,7 @@ public class SCPlugin extends JavaPlugin {
                     if (player == null) { continue; }
 
                     double playerEarned = Math.round(earned.get(offlinePlayer) * 100.0) / 100.0;
-                    player.sendMessage(new Color.Builder(this).path("messages.earned_notify")
+                    player.sendMessage(new ColorBuilder(this).path("messages.earned_notify")
                             .replaceWithCurrency("%worth%", String.valueOf(playerEarned))
                             .replace("%time%", String.valueOf(minutes))
                             .addPrefix()
@@ -154,11 +195,14 @@ public class SCPlugin extends JavaPlugin {
                 }
             }
             earned.clear();
-        }, minutes * 20 * 60, minutes * 20 * 60);
+        }, (long) minutes * 20 * 60, (long) minutes * 20 * 60);
     }
 
     /** Loads custom loot tables from config */
     private void loadCustomLoot() {
+
+
+
         customLoot.clear();
         if (!usingCustomLoot) { return; }
         ConfigurationSection mobs = getConfig().getConfigurationSection("custom_loot_tables.mobs");
@@ -195,7 +239,7 @@ public class SCPlugin extends JavaPlugin {
     }
 
     /** Setup Vault Economy integration */
-    private boolean setupEconomy() {
+    private void setupEconomy() {
         RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
         if (economyProvider != null) {
             econ = economyProvider.getProvider();
@@ -203,10 +247,9 @@ public class SCPlugin extends JavaPlugin {
             Bukkit.getLogger().info("Could not find Economy Provider!");
         }
 
-        return (econ != null);
     }
 
-    /** Getters */
+    //Getters
     public Economy getEconomy() {
         return econ;
     }
@@ -218,6 +261,9 @@ public class SCPlugin extends JavaPlugin {
     }
     public EnumMap<EntityType, List<ItemLoot>> getCustomLoot() {
         return customLoot;
+    }
+    public DataStoreMethod getStoreMethod() {
+        return storeMethod;
     }
     public int getMaxSpawners() {
         return maxSpawners;

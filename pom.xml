@@ -23,10 +23,16 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <!-- HeadDatabase-API -->
         <repository>
             <id>headdatabase-api</id>
             <url>https://mvn.intellectualsites.com/content/repositories/thirdparty/</url>
         </repository>
+        <repository>
+            <id>CodeMC</id>
+            <url>https://repo.codemc.org/repository/maven-public</url>
+        </repository>
+
     </repositories>
 
     <dependencies>
@@ -51,6 +57,7 @@
             <groupId>me.arcaniax</groupId>
             <artifactId>HeadDatabase-API</artifactId>
             <version>1.0.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- XSeries -->
@@ -58,6 +65,14 @@
             <groupId>com.github.cryptomorin</groupId>
             <artifactId>XSeries</artifactId>
             <version>7.6.0</version>
+        </dependency>
+
+        <!-- bStats -->
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>1.7</version>
+            <scope>compile</scope>
         </dependency>
 
     </dependencies>
@@ -73,13 +88,13 @@
                         <relocation>
                             <pattern>com.cryptomorin.xseries</pattern>
                             <!-- Be sure to change the package below -->
-                            <shadedPattern>me.bestem0r.spawnercollectors.utilities</shadedPattern>
+                            <shadedPattern>me.bestem0r.spawnercollectors.utils</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.bstats.bukkit</pattern>
+                            <shadedPattern>com.bestem0r.spawnercollectors.utils</shadedPattern>
                         </relocation>
                     </relocations>
-                    <!-- Here you can remove the classes you don't use. -->
-                    <!-- These are some examples. -->
-                    <!-- The "unused" package and SkullCacheListener are excluded by default. -->
-                    <!-- Some utilities such a XItemStack depend on more than 3 other classes, so watch out. -->
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>

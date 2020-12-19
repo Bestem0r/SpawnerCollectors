@@ -2,7 +2,7 @@ package me.bestem0r.spawnercollectors.events;
 
 import me.bestem0r.spawnercollectors.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utilities.Methods;
+import me.bestem0r.spawnercollectors.utils.Methods;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
