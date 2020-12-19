@@ -2,11 +2,9 @@ package me.bestem0r.spawnercollectors.menus;
 
 import me.bestem0r.spawnercollectors.EntityCollector;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utilities.Color;
-import me.bestem0r.spawnercollectors.utilities.Methods;
+import me.bestem0r.spawnercollectors.utils.ColorBuilder;
+import me.bestem0r.spawnercollectors.utils.Methods;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -16,7 +14,7 @@ import java.util.List;
 public abstract class EntityMenu {
 
     public static Inventory create(SCPlugin plugin, List<EntityCollector> collected, boolean autoSell) {
-        Inventory inventory = Bukkit.createInventory(null, 54, new Color.Builder(plugin).path("menus.mobs.title").build());
+        Inventory inventory = Bukkit.createInventory(null, 54, new ColorBuilder(plugin).path("menus.mobs.title").build());
         ItemStack[] items = new ItemStack[54];
         double totalWorth = 0;
 
@@ -38,7 +36,7 @@ public abstract class EntityMenu {
 
         ItemStack sellAll = Methods.itemFromConfig(plugin, "menus.items.sell_all");
         ItemMeta sellAllMeta = sellAll.getItemMeta();
-        sellAllMeta.setLore(new Color.Builder(plugin).path("menus.items.sell_all.lore")
+        sellAllMeta.setLore(new ColorBuilder(plugin).path("menus.items.sell_all.lore")
                 .replaceWithCurrency("%worth%", String.valueOf(totalWorth)).buildLore());
         sellAll.setItemMeta(sellAllMeta);
         items[49] = sellAll;

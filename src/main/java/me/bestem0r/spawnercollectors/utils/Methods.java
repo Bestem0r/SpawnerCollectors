@@ -1,4 +1,4 @@
-package me.bestem0r.spawnercollectors.utilities;
+package me.bestem0r.spawnercollectors.utils;
 
 import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XSound;
@@ -27,32 +27,12 @@ import org.bukkit.loot.Lootable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
-public abstract class Methods {
+public class Methods {
 
-
-    /** Creates new collector file with default values */
-    private static Collector createCollector(SCPlugin plugin, Player player) {
-        String uuid = player.getUniqueId().toString();
-        File file = new File(Bukkit.getPluginManager().getPlugin("SpawnerCollectors").getDataFolder() + "/collectors/" + uuid + ".yml");
-        FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-
-        config.set("owner_uuid", uuid);
-        config.set("auto_sell", false);
-
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Collector collector = new Collector(plugin, file);
-        plugin.collectors.add(collector);
-        return collector;
-    }
+    private Methods() {}
 
     /** Returns collector based on Player */
     public static Collector getCollector(SCPlugin plugin, Player player) {
@@ -61,7 +41,7 @@ public abstract class Methods {
                 return collector;
             }
         }
-        return createCollector(plugin, player);
+        return new Collector(plugin, player);
     }
 
 
@@ -133,8 +113,8 @@ public abstract class Methods {
         spawner.setSpawnedType(entityType);
         blockStateMeta.setBlockState(blockState);
 
-        String entityName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " "));
-        itemMeta.setDisplayName(new Color.Builder(plugin).path("spawner_withdraw_name").replace("%entity%", entityName).build());
+        String entityName = WordUtils.capitalizeFully(entityType.name().replaceAll("_", " "));
+        itemMeta.setDisplayName(new ColorBuilder(plugin).path("spawner_withdraw_name").replace("%entity%", entityName).build());
 
         itemStack.setItemMeta(itemMeta);
         return itemStack;
@@ -153,8 +133,8 @@ public abstract class Methods {
         XMaterial xMaterial = XMaterial.matchXMaterial(config.getString(path + ".material")).orElse(XMaterial.STONE);
         ItemStack itemStack = xMaterial.parseItem();
         ItemMeta itemMeta = itemStack.getItemMeta();
-        itemMeta.setDisplayName(new Color.Builder(plugin).path(path + ".name").build());
-        itemMeta.setLore((new Color.Builder(plugin).path(path + ".lore")).buildLore());
+        itemMeta.setDisplayName(new ColorBuilder(plugin).path(path + ".name").build());
+        itemMeta.setLore((new ColorBuilder(plugin).path(path + ".lore")).buildLore());
         itemStack.setItemMeta(itemMeta);
 
         return itemStack;

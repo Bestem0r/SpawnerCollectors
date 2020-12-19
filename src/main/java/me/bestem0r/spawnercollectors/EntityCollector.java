@@ -2,22 +2,19 @@ package me.bestem0r.spawnercollectors;
 
 import com.cryptomorin.xseries.XMaterial;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
-import me.bestem0r.spawnercollectors.utilities.Color;
+import me.bestem0r.spawnercollectors.utils.ColorBuilder;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class EntityCollector {
 
@@ -84,7 +81,7 @@ public class EntityCollector {
         ItemMeta itemMeta = item.getItemMeta();
         itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
 
-        itemMeta.setLore(new Color.Builder(plugin, spawnerLore).replace("%amount%", String.valueOf(spawners.size())).buildLore());
+        itemMeta.setLore(new ColorBuilder(plugin, spawnerLore).replace("%amount%", String.valueOf(spawners.size())).buildLore());
         item.setItemMeta(itemMeta);
         return item;
     }
@@ -94,6 +91,7 @@ public class EntityCollector {
         try {
             ItemStack item;
             String material = plugin.materials.get(entityType);
+
             if (plugin.isUsingHeadDB() && material.startsWith("hdb:")) {
                 item = new HeadDatabaseAPI().getItemHead(material.substring(4));
             } else {
@@ -105,7 +103,7 @@ public class EntityCollector {
 
             itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
 
-            itemMeta.setLore(new Color.Builder(plugin, entityLore)
+            itemMeta.setLore(new ColorBuilder(plugin, entityLore)
                     .replace("%amount%", String.valueOf(entityAmount))
                     .replaceWithCurrency("%worth%", String.valueOf(getTotalWorth()))
                     .buildLore());

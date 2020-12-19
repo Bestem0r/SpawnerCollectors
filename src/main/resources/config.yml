@@ -24,16 +24,32 @@ log: true
 # - spawnercollectors.withdraw.spawner
 more_permissions: false
 
+
+#---------------- Data Storage Settings ----------------#
+
+#Can be YAML or MYSQL
+data_storage_method: YAML
+#Following attributes apply if you're using MySQL only
+address: localhost
+port: 3306
+database: spawnercollectors
+user: root
+password: password123
+
+
 #----------------- Messages and sounds -----------------#
 
 messages:
   earned_notify: "&7Earned &a%worth% &7the past &e%time% minutes &7from auto selling spawners!" #Placeholders: %worth%, %time%
   sell: "&7Sold mobs for &a%worth%&7!" #Placeholders: %worth%
   sell_all: "&7Sold everything for a total of &a%worth%&7!"
-  not_supported: "&cThis entity type is not yet supported! Please contact an administrator!"
+  not_supported: "&cThis entity type is not supported! Please contact an administrator to add it!"
   plugin_reloaded: "&aPlugin reloaded!"
   give_spawner: "&aSpawners successfully given!"
   reached_max_spawners: "&cCould not add spawners because of the max limit (%max%)! Please try again with a lower amount!"
+  invalid_command_usage: "&cInvalid usage! Use /sc help"
+  no_permission_command: "&cYou do not have permission for this action!"
+  no_permission_mob: "&cYou do not have permission to add this mob!"
   no_permission_sell: "&cYou do not have permission to sell mobs!"
   no_permission_withdraw_spawner: "&cYou do not have permission to withdraw spawners!"
   no_permission_withdraw_mob: "&cYou do not have permission to withdraw mobs!"

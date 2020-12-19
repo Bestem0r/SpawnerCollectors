@@ -1,4 +1,4 @@
-package me.bestem0r.spawnercollectors.utilities;
+package me.bestem0r.spawnercollectors.utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -8,7 +8,9 @@ import org.bukkit.entity.EntityType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public abstract class EntityBuilder {
+public class EntityBuilder {
+
+    private EntityBuilder() {}
 
     public static Entity createEntity(EntityType entityType, Location location) {
         try {
