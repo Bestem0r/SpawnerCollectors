@@ -263,6 +263,15 @@ public class Collector {
                     player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
                 }
             }
+            if (plugin.doGiveXP()) {
+                for (EntityExperience e : EntityExperience.values()) {
+                    if (e.name().equals(collected.getEntityType().name())) {
+                        player.giveExp(e.getRandomAmount(withdrawAmount));
+                        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
+                        break;
+                    }
+                }
+            }
             Methods.playSound(plugin, player, "withdraw");
             updateEntityMenu();
         }
