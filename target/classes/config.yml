@@ -23,6 +23,8 @@ log: true
 # - spawnercollectors.withdraw.mob
 # - spawnercollectors.withdraw.spawner
 more_permissions: false
+#Should experience (XP) be given when mobs are withdrawn?
+give_xp: true
 
 
 #---------------- Data Storage Settings ----------------#

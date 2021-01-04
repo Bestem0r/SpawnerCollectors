@@ -49,6 +49,7 @@ public class SCPlugin extends JavaPlugin {
     private boolean usingCustomLoot;
     private boolean usingHeadDB;
     private boolean morePermissions;
+    private boolean giveXP;
     private int maxSpawners;
 
     private DataStoreMethod storeMethod = YAML;
@@ -113,6 +114,7 @@ public class SCPlugin extends JavaPlugin {
         this.usingCustomLoot = getConfig().getBoolean("custom_loot_tables.enable");
         this.maxSpawners = getConfig().getInt("max_spawners");
         this.morePermissions = getConfig().getBoolean("more_permissions");
+        this.giveXP = getConfig().getBoolean("give_xp");
         this.storeMethod = DataStoreMethod.valueOf(getConfig().getString("data_storage_method"));
         if (usingHeadDB && !Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
             Bukkit.getLogger().severe("[SpawnerCollectors] Could not find HeadDatabase. Defaulting to material IDs!");
@@ -270,6 +272,9 @@ public class SCPlugin extends JavaPlugin {
     }
     public boolean isMorePermissions() {
         return morePermissions;
+    }
+    public boolean doGiveXP() {
+        return giveXP;
     }
 
     /** Earned message methods */
