@@ -13,18 +13,30 @@ currency_before: false
 #Item name for withdrawn spawners (Placeholder: %entity%)
 spawner_withdraw_name: "&r%entity% Spawner"
 #Maximum allowed spawner amount per entity type (0 for unlimited)
+#Can be bypassed with 'spawnercollectors.bypass_limit'
 max_spawners: 0
 #Should an action log be saved on plugin/server reload?
 log: true
 #Require permissions for sell, withdraw, auto-sell
-#The permissions are:
+#These permissions are:
 # - spawnercollectors.sell,
 # - spawnercollectors.auto_sell,
 # - spawnercollectors.withdraw.mob
 # - spawnercollectors.withdraw.spawner
+#Enabling this also requires permissions to add each mob
+#E.g. adding zombie spawners requires:
+# - spawnercollectors.spawner.zombie
+#You can also set max amount per mob, e.g:
+# - spawnercollectors.spawner.zombie.10
 more_permissions: false
 #Should experience (XP) be given when mobs are withdrawn?
+#This also requires the player to have permission node:
+#spawnercollectors.receive_xp
 give_xp: true
+#This will disable placing spawners on the ground. Can be
+#bypassed with 'spawnercollectors.bypass_place'
+disable_spawner_placing: false
+
 
 
 #---------------- Data Storage Settings ----------------#
@@ -48,7 +60,7 @@ messages:
   not_supported: "&cThis entity type is not supported! Please contact an administrator to add it!"
   plugin_reloaded: "&aPlugin reloaded!"
   give_spawner: "&aSpawners successfully given!"
-  reached_max_spawners: "&cCould not add spawners because of the max limit (%max%)! Please try again with a lower amount!"
+  reached_max_spawners: "&cYou have reached the max limit of %max% for this mob type! Please try again with a lower amount!"
   invalid_command_usage: "&cInvalid usage! Use /sc help"
   no_permission_command: "&cYou do not have permission for this action!"
   no_permission_mob: "&cYou do not have permission to add this mob!"
@@ -56,6 +68,7 @@ messages:
   no_permission_withdraw_spawner: "&cYou do not have permission to withdraw spawners!"
   no_permission_withdraw_mob: "&cYou do not have permission to withdraw mobs!"
   no_permission_auto-sell: "&cYou do not have permission to auto-sell!"
+  no_permission_place_spawner: "&cYou do not have permissions to place spawners!"
 
 sounds:
   spawners_open: BLOCK_CHEST_OPEN
@@ -170,7 +183,3 @@ custom_loot_tables:
         probability: 0.8
         min: 3
         max: 6
-
-
-
-

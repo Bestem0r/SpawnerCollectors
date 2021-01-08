@@ -11,7 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
 
-public abstract class SpawnerMenu {
+public class SpawnerMenu {
 
     public static Inventory create(SCPlugin plugin, List<EntityCollector> collected, boolean autoSell) {
         Inventory inventory = Bukkit.createInventory(null, 54, new ColorBuilder(plugin).path("menus.spawners.title").build());

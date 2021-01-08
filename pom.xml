@@ -87,12 +87,11 @@
                     <relocations>
                         <relocation>
                             <pattern>com.cryptomorin.xseries</pattern>
-                            <!-- Be sure to change the package below -->
-                            <shadedPattern>me.bestem0r.spawnercollectors.utils</shadedPattern>
+                            <shadedPattern>me.bestem0r.spawnercollectors.utils.xmaterial</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.bstats.bukkit</pattern>
-                            <shadedPattern>com.bestem0r.spawnercollectors.utils</shadedPattern>
+                            <shadedPattern>com.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
                         </relocation>
                     </relocations>
                     <filters>

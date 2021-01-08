@@ -1,10 +1,8 @@
 package me.bestem0r.spawnercollectors;
 
 import me.bestem0r.spawnercollectors.commands.CommandModule;
-import me.bestem0r.spawnercollectors.commands.subcommands.GiveSpawnerCommand;
-import me.bestem0r.spawnercollectors.commands.subcommands.MobsCommand;
-import me.bestem0r.spawnercollectors.commands.subcommands.ReloadCommand;
-import me.bestem0r.spawnercollectors.commands.subcommands.SpawnersCommand;
+import me.bestem0r.spawnercollectors.commands.subcommands.*;
+import me.bestem0r.spawnercollectors.events.BlockPlace;
 import me.bestem0r.spawnercollectors.events.Join;
 import me.bestem0r.spawnercollectors.events.Quit;
 import me.bestem0r.spawnercollectors.loot.ItemLoot;
@@ -24,7 +22,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -50,6 +47,7 @@ public class SCPlugin extends JavaPlugin {
     private boolean usingHeadDB;
     private boolean morePermissions;
     private boolean giveXP;
+    private boolean disablePlace;
     private int maxSpawners;
 
     private DataStoreMethod storeMethod = YAML;
@@ -66,6 +64,7 @@ public class SCPlugin extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new Join(this), this);
         Bukkit.getPluginManager().registerEvents(new Quit(this), this);
+        Bukkit.getPluginManager().registerEvents(new BlockPlace(this), this);
 
         setupEconomy();
         loadValues();
@@ -82,6 +81,7 @@ public class SCPlugin extends JavaPlugin {
                 .addSubCommand("mobs", new MobsCommand(this))
                 .addSubCommand("spawners", new SpawnersCommand(this))
                 .addSubCommand("givespawner", new GiveSpawnerCommand(this))
+                .addSubCommand("open", new OpenCommand(this))
                 .build();
         commandModule.register("sc");
 
@@ -116,6 +116,7 @@ public class SCPlugin extends JavaPlugin {
         this.morePermissions = getConfig().getBoolean("more_permissions");
         this.giveXP = getConfig().getBoolean("give_xp");
         this.storeMethod = DataStoreMethod.valueOf(getConfig().getString("data_storage_method"));
+        this.disablePlace = getConfig().getBoolean("disable_spawner_placing");
         if (usingHeadDB && !Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
             Bukkit.getLogger().severe("[SpawnerCollectors] Could not find HeadDatabase. Defaulting to material IDs!");
             this.usingHeadDB = false;
@@ -275,6 +276,9 @@ public class SCPlugin extends JavaPlugin {
     }
     public boolean doGiveXP() {
         return giveXP;
+    }
+    public boolean isDisablePlace() {
+        return disablePlace;
     }
 
     /** Earned message methods */

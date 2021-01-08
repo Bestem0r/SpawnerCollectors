@@ -169,45 +169,70 @@ public class Collector {
 
     /** Adds spawner */
     public boolean addSpawner(Player player, EntityType entityType, int amount) {
-        if (!plugin.materials.containsKey(entityType) && player != null) {
-            player.sendMessage(new ColorBuilder(plugin).path("messages.not_supported").addPrefix().build());
+        if (!this.plugin.materials.containsKey(entityType) && player != null) {
+            player.sendMessage((new ColorBuilder(this.plugin)).path("messages.not_supported").addPrefix().build());
             return false;
         }
-        if (player != null && plugin.isMorePermissions() && !player.hasPermission("spawnercollectors.spawner." + entityType.name().toLowerCase())) {
-            player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_mob").addPrefix().build());
+        //Check if owner has permission for mob
+        if (player != null && this.plugin.isMorePermissions() && !this.owner.isOp() && this.owner.getEffectivePermissions().stream()
+                .noneMatch((s) -> s.getPermission().startsWith("spawnercollectors.spawner." + entityType.name().toLowerCase()))) {
+
+            player.sendMessage((new ColorBuilder(this.plugin)).path("messages.no_permission_mob").addPrefix().build());
             return false;
         }
-        if (player != null && plugin.getMaxSpawners() > 0 && plugin.getMaxSpawners() < amount && !owner.hasPermission("spawnercollectors.bypass_limit")) {
-            player.sendMessage(new ColorBuilder(plugin)
-                    .path("messages.reached_max_spawners")
-                    .replace("%max%", String.valueOf(plugin.getMaxSpawners()))
-                    .addPrefix().build());
+        //Check if amount is exceeding global max limit
+        if (player != null && this.plugin.getMaxSpawners() > 0 && this.plugin.getMaxSpawners() < amount && !this.owner.hasPermission("spawnercollectors.bypass_limit")) {
+            player.sendMessage((new ColorBuilder(this.plugin)).path("messages.reached_max_spawners").replace("%max%", String.valueOf(this.plugin.getMaxSpawners())).addPrefix().build());
             return false;
         }
 
-        Optional<EntityCollector> optionalCollector = collectorEntities.stream()
-                .filter(c -> c.getEntityType() == entityType)
-                .findAny();
+        int max = 0;
+        if (player != null) {
+            max = this.owner.getEffectivePermissions().stream()
+                    .filter((s) -> s.getPermission().startsWith("spawnercollectors.spawner." + entityType.name().toLowerCase()))
+                    .filter((s) -> s.getPermission().length() > 26 + entityType.name().length() + 1)
+                    .map((s) -> s.getPermission().substring(26 + entityType.name().length() + 1))
+                    .mapToInt(Integer::parseInt)
+                    .max()
+                    .orElse(0);
+        }
+
+        //Check if amount is exceeding per-mob permission limit
+        if (player != null && this.plugin.isMorePermissions() && !owner.isOp() && max != 0 && max < amount) {
+            player.sendMessage((new ColorBuilder(this.plugin)).path("messages.reached_max_spawners").replace("%max%", String.valueOf(max)).addPrefix().build());
+            return false;
+        }
+
+        Optional<EntityCollector> optionalCollector = this.collectorEntities.stream().filter((c) -> c.getEntityType() == entityType).findAny();
+
         if (optionalCollector.isPresent()) {
+
             EntityCollector collector = optionalCollector.get();
-            if (player != null && plugin.getMaxSpawners() > 0 && plugin.getMaxSpawners() < amount + collector.getSpawnerAmount() && !owner.hasPermission("spawnercollectors.bypass_limit")) {
-                player.sendMessage(new ColorBuilder(plugin)
-                        .path("messages.reached_max_spawners")
-                        .replace("%max%", String.valueOf(plugin.getMaxSpawners()))
-                        .addPrefix().build());
+            //Check if new amount will exceed global max limit
+            if (player != null && this.plugin.getMaxSpawners() > 0 && this.plugin.getMaxSpawners() < amount + collector.getSpawnerAmount() && !this.owner.hasPermission("spawnercollectors.bypass_limit")) {
+                player.sendMessage((new ColorBuilder(this.plugin)).path("messages.reached_max_spawners").replace("%max%", String.valueOf(this.plugin.getMaxSpawners())).addPrefix().build());
                 return false;
             }
+            //Check if new amount will exceed per-mob permission limit
+            if (player != null && this.plugin.isMorePermissions() && !owner.isOp() && max != 0 && max < amount + collector.getSpawnerAmount()) {
+                player.sendMessage((new ColorBuilder(this.plugin)).path("messages.reached_max_spawners").replace("%max%", String.valueOf(max)).addPrefix().build());
+                return false;
+            }
+
             collector.addSpawner(amount);
         } else {
-            collectorEntities.add(new EntityCollector(plugin, entityType, 0, amount));
+            this.collectorEntities.add(new EntityCollector(this.plugin, entityType, 0, amount));
         }
-        if (player != null) { Methods.playSound(plugin, player, "add_spawner");}
+
+        if (player != null) {
+            Methods.playSound(this.plugin, player, "add_spawner");
+        }
 
         String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")) + " Spawner";
-        String giverName = (player == null ? "Console" : player.getName());
-        plugin.log.add(ChatColor.stripColor(new Date().toString() + ": " + giverName + " added " + amount + " " + spawnerName + " to " + owner.getName() + "'s collector!"));
-        updateSpawnerMenuIfView();
-        updateEntityMenuIfView();
+        String giverName = player == null ? "Console" : player.getName();
+        this.plugin.log.add(ChatColor.stripColor((new Date()).toString() + ": " + giverName + " added " + amount + " " + spawnerName + " to " + this.owner.getName() + "'s collector!"));
+        this.updateSpawnerMenuIfView();
+        this.updateEntityMenuIfView();
         return true;
     }
 
@@ -263,11 +288,12 @@ public class Collector {
                     player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
                 }
             }
-            if (plugin.doGiveXP()) {
+            if (this.plugin.doGiveXP() && (!this.plugin.isMorePermissions() || player.hasPermission("spawnercollectors.receive_xp"))) {
+
                 for (EntityExperience e : EntityExperience.values()) {
                     if (e.name().equals(collected.getEntityType().name())) {
                         player.giveExp(e.getRandomAmount(withdrawAmount));
-                        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
+                        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
                         break;
                     }
                 }
