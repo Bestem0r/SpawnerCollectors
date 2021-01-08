@@ -1,5 +1,5 @@
 name: SpawnerCollectors
-version: 1.4.0
+version: 1.5.0
 api-version: 1.13
 main: me.bestem0r.spawnercollectors.SCPlugin
 softdepend: [HeadDatabase, Essentials, CMI]
@@ -18,6 +18,12 @@ permissions:
   spawnercollectors.command.spawners:
     description: Open your spawners storage
     default: op
+  spawnercollectors.command.open:
+    description: Open other's spawner/mob storage
+    default: op
+  spawnercollectors.command.givespawner:
+    description: Give spawners
+    default: op
   spawnercollectors.sell:
     description: Sell collected mobs
     default: op
@@ -30,4 +36,14 @@ permissions:
   spawnercollectors.withdraw.spawner:
     description: Withdraw spawners
     default: op
+  spawnercollectors.receive_xp:
+    description: Receive XP if more_permissions is enabled
+    default: op
+  spawnercollectors.bypass_place:
+    description: Bypass spawner place restriction
+    default: op
+  spawnercollectors.bypass_limit:
+    description: Bypass spawner max limit
+    default: op
+
 

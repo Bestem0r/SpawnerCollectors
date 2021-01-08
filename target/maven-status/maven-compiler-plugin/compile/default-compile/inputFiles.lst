@@ -1,22 +1,24 @@
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\events\InventoryClick.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\loot\ItemLoot.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\EntityBuilder.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\Collector.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\SCPlugin.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\Methods.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\GiveSpawnerCommand.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\DataStoreMethod.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\CommandModule.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\menus\SpawnerMenu.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\SpawnersCommand.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\events\Join.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\events\Quit.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\menus\EntityMenu.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\Database.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\CollectedSpawner.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\EntityExperience.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\MobsCommand.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\SubCommand.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\ReloadCommand.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\EntityCollector.java
-C:\Users\Vebjørn\Documents\GitHub\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\ColorBuilder.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\SubCommand.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\Collector.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\MobsCommand.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\menus\EntityMenu.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\CollectedSpawner.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\events\Quit.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\DataStoreMethod.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\EntityBuilder.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\CommandModule.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\events\InventoryClick.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\Methods.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\Database.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\EntityCollector.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\EntityExperience.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\utils\ColorBuilder.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\events\BlockPlace.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\SCPlugin.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\GiveSpawnerCommand.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\menus\SpawnerMenu.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\SpawnersCommand.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\loot\ItemLoot.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\OpenCommand.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\commands\subcommands\ReloadCommand.java
+D:\Mine Ting\Minecraft\Plugins\Spawner Collectors\SpawnerCollectors\src\main\java\me\bestem0r\spawnercollectors\events\Join.java
