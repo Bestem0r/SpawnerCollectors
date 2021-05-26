@@ -36,7 +36,10 @@ give_xp: true
 #This will disable placing spawners on the ground. Can be
 #bypassed with 'spawnercollectors.bypass_place'
 disable_spawner_placing: false
-
+#Enable this to turn off collectors for AFK players
+afk:
+  enable: true
+  time: 300 #Seconds
 
 
 #---------------- Data Storage Settings ----------------#
@@ -49,6 +52,17 @@ port: 3306
 database: spawnercollectors
 user: root
 password: password123
+
+
+#---------------- Spawner Settings ----------------#
+
+#(Default config replicates vanilla behaviour)
+spawner:
+  #How many mobs are spawned for every spawn
+  spawns: 4
+  min_time: 1 #Second
+  max_time: 2 #Second
+
 
 
 #----------------- Messages and sounds -----------------#
@@ -69,6 +83,8 @@ messages:
   no_permission_withdraw_mob: "&cYou do not have permission to withdraw mobs!"
   no_permission_auto-sell: "&cYou do not have permission to auto-sell!"
   no_permission_place_spawner: "&cYou do not have permissions to place spawners!"
+  afk: "&cYou are now AFK. Collectors are turned off!"
+  no_longer_afk: "&aYou are no longer AFK. Collectors working normally"
 
 sounds:
   spawners_open: BLOCK_CHEST_OPEN
@@ -179,7 +195,14 @@ custom_loot_tables:
         min: 1
         #Maximum amount
         max: 4
+
       ARROW:
         probability: 0.8
         min: 3
         max: 6
+
+#Enabled if custom_loot_tables is enabled
+custom_xp:
+  mobs:
+    SKELETON: 10
+

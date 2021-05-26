@@ -1,5 +1,6 @@
 package me.bestem0r.spawnercollectors.loot;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -15,6 +16,7 @@ public class ItemLoot {
     private final int max;
 
     public ItemLoot(Material material, double probability, int min, int max) {
+        Bukkit.getLogger().info(material + " | " + probability);
         this.material = material;
         this.probability = probability;
         this.min = min;

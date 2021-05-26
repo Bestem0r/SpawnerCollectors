@@ -38,7 +38,7 @@ public class EntityCollector {
 
         this.entityAmount = entityAmount;
         for (int i = 0; i  < spawnerAmount; i++) {
-            spawners.add(new CollectedSpawner());
+            spawners.add(new CollectedSpawner(plugin.getSpawnAmount(), plugin.getSpawnTimeMin(), plugin.getSpawnTimeMax()));
         }
     }
 
@@ -59,7 +59,7 @@ public class EntityCollector {
     /** Adds spawner */
     public void addSpawner(int amount) {
         for (int i = 0; i < amount; i++) {
-            spawners.add(new CollectedSpawner());
+            spawners.add(new CollectedSpawner(plugin.getSpawnAmount(), plugin.getSpawnTimeMin(), plugin.getSpawnTimeMax()));
         }
     }
 
