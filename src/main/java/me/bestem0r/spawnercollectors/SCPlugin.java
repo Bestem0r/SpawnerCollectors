@@ -2,6 +2,7 @@ package me.bestem0r.spawnercollectors;
 
 import me.bestem0r.spawnercollectors.commands.CommandModule;
 import me.bestem0r.spawnercollectors.commands.subcommands.*;
+import me.bestem0r.spawnercollectors.events.AFKChecker;
 import me.bestem0r.spawnercollectors.events.BlockPlace;
 import me.bestem0r.spawnercollectors.events.Join;
 import me.bestem0r.spawnercollectors.events.Quit;
@@ -42,13 +43,21 @@ public class SCPlugin extends JavaPlugin {
 
     private final Map<OfflinePlayer, Double> earned = new HashMap<>();
     private final EnumMap<EntityType, List<ItemLoot>> customLoot = new EnumMap<>(EntityType.class);
+    private final EnumMap<EntityType, Integer> customXP = new EnumMap<>(EntityType.class);
 
     private boolean usingCustomLoot;
     private boolean usingHeadDB;
     private boolean morePermissions;
     private boolean giveXP;
     private boolean disablePlace;
+
+    private AFKChecker afkChecker;
+
     private int maxSpawners;
+
+    private int spawnAmount;
+    private int spawnTimeMin;
+    private int spawnTimeMax;
 
     private DataStoreMethod storeMethod = YAML;
 
@@ -65,6 +74,8 @@ public class SCPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new Join(this), this);
         Bukkit.getPluginManager().registerEvents(new Quit(this), this);
         Bukkit.getPluginManager().registerEvents(new BlockPlace(this), this);
+        this.afkChecker = new AFKChecker(this);
+        Bukkit.getPluginManager().registerEvents(afkChecker, this);
 
         setupEconomy();
         loadValues();
@@ -95,7 +106,7 @@ public class SCPlugin extends JavaPlugin {
         super.onDisable();
         saveLog();
         for (Collector collector : collectors) {
-            collector.save();
+            collector.saveSync();
         }
         if (storeMethod == MYSQL) {
             try {
@@ -121,6 +132,9 @@ public class SCPlugin extends JavaPlugin {
             Bukkit.getLogger().severe("[SpawnerCollectors] Could not find HeadDatabase. Defaulting to material IDs!");
             this.usingHeadDB = false;
         }
+        this.spawnAmount = getConfig().getInt("spawner.spawns");
+        this.spawnTimeMin = getConfig().getInt("spawner.min_time");
+        this.spawnTimeMax = getConfig().getInt("spawner.max_time");
         loadCustomLoot();
         loadEntities();
     }
@@ -204,25 +218,36 @@ public class SCPlugin extends JavaPlugin {
     /** Loads custom loot tables from config */
     private void loadCustomLoot() {
 
-
-
         customLoot.clear();
+        customXP.clear();
         if (!usingCustomLoot) { return; }
         ConfigurationSection mobs = getConfig().getConfigurationSection("custom_loot_tables.mobs");
-        for (String mob : mobs.getKeys(false)) {
+        if (mobs != null) {
+            for (String mob : mobs.getKeys(false)) {
 
-            EntityType entityType = EntityType.valueOf(mob);
-            ConfigurationSection items = getConfig().getConfigurationSection("custom_loot_tables.mobs." + mob);
-            for (String item : items.getKeys(false)) {
+                EntityType entityType = EntityType.valueOf(mob);
+                ConfigurationSection items = getConfig().getConfigurationSection("custom_loot_tables.mobs." + mob);
+                for (String item : items.getKeys(false)) {
 
-                Material material = Material.valueOf(item);
-                double probability = getConfig().getDouble("custom_loot_tables.mobs." + mob + "." + item + ".probability");
-                int min = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".min");
-                int max = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".max");
+                    Material material = Material.valueOf(item);
+                    Bukkit.getLogger().info("Loaded " + material);
+                    double probability = getConfig().getDouble("custom_loot_tables.mobs." + mob + "." + item + ".probability");
+                    int min = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".min");
+                    int max = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".max");
 
-                List<ItemLoot> loot = (customLoot.containsKey(entityType) ? customLoot.get(entityType) : new ArrayList<>());
-                loot.add(new ItemLoot(material, probability, min, max));
-                customLoot.put(entityType, loot);
+                    List<ItemLoot> loot = (customLoot.containsKey(entityType) ? customLoot.get(entityType) : new ArrayList<>());
+                    loot.add(new ItemLoot(material, probability, min, max));
+                    customLoot.put(entityType, loot);
+                }
+                Bukkit.getLogger().info(mob + " | " + customLoot.get(entityType).size());
+            }
+        }
+        ConfigurationSection xp = getConfig().getConfigurationSection("custom_xp.mobs");
+        if (xp != null) {
+            for (String mob : xp.getKeys(false)) {
+
+                EntityType entityType = EntityType.valueOf(mob);
+                customXP.put(entityType, getConfig().getInt("custom_xp.mobs." + mob));
             }
         }
     }
@@ -265,6 +290,9 @@ public class SCPlugin extends JavaPlugin {
     public EnumMap<EntityType, List<ItemLoot>> getCustomLoot() {
         return customLoot;
     }
+    public EnumMap<EntityType, Integer> getCustomXP() {
+        return customXP;
+    }
     public DataStoreMethod getStoreMethod() {
         return storeMethod;
     }
@@ -279,6 +307,18 @@ public class SCPlugin extends JavaPlugin {
     }
     public boolean isDisablePlace() {
         return disablePlace;
+    }
+    public int getSpawnAmount() {
+        return spawnAmount;
+    }
+    public int getSpawnTimeMin() {
+        return spawnTimeMin;
+    }
+    public int getSpawnTimeMax() {
+        return spawnTimeMax;
+    }
+    public AFKChecker getAfkChecker() {
+        return afkChecker;
     }
 
     /** Earned message methods */

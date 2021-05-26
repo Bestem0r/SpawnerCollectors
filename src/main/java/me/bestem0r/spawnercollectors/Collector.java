@@ -43,7 +43,6 @@ public class Collector {
     private Inventory entityMenu;
     
     private final SCPlugin plugin;
-    private Connection connection;
 
     private boolean autoSell;
 
@@ -51,13 +50,15 @@ public class Collector {
         this.plugin = plugin;
         this.owner = player;
 
-        switch (plugin.getStoreMethod()) {
-            case MYSQL:
-                loadMYSQL();
-                break;
-            case YAML:
-                loadYAML();
-        }
+        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+            switch (plugin.getStoreMethod()) {
+                case MYSQL:
+                    loadMYSQL();
+                    break;
+                case YAML:
+                    loadYAML();
+            }
+        }, 40L);
     }
 
     private void loadYAML() {
@@ -76,9 +77,9 @@ public class Collector {
         }
     }
     private void loadMYSQL() {
-        this.connection = Database.getDataBaseConnection();
+        Connection connection = Database.getDataBaseConnection();
         try {
-            String playerQuery = "SELECT * FROM player_data WHERE owner_uuid = '" + owner.getUniqueId().toString() + "'";
+            String playerQuery = "SELECT * FROM player_data WHERE owner_uuid = '" + owner.getUniqueId() + "'";
             PreparedStatement preparedPlayerStatement = connection.prepareStatement(playerQuery);
 
             ResultSet playerResult = preparedPlayerStatement.executeQuery();
@@ -86,7 +87,7 @@ public class Collector {
                 this.autoSell = playerResult.getBoolean("auto_sell");
             }
 
-            String entityQuery = "SELECT * FROM entity_data WHERE owner_uuid = '" + owner.getUniqueId().toString() + "'";
+            String entityQuery = "SELECT * FROM entity_data WHERE owner_uuid = '" + owner.getUniqueId() + "'";
             PreparedStatement preparedEntityStatement = connection.prepareStatement(entityQuery);
 
             ResultSet entitySet = preparedEntityStatement.executeQuery();
@@ -290,11 +291,16 @@ public class Collector {
             }
             if (this.plugin.doGiveXP() && (!this.plugin.isMorePermissions() || player.hasPermission("spawnercollectors.receive_xp"))) {
 
-                for (EntityExperience e : EntityExperience.values()) {
-                    if (e.name().equals(collected.getEntityType().name())) {
-                        player.giveExp(e.getRandomAmount(withdrawAmount));
-                        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
-                        break;
+                if (plugin.isUsingCustomLoot() && plugin.getCustomXP().containsKey(collected.getEntityType())) {
+                    player.giveExp(plugin.getCustomXP().get(collected.getEntityType()));
+                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
+                } else {
+                    for (EntityExperience e : EntityExperience.values()) {
+                        if (e.name().equals(collected.getEntityType().name())) {
+                            player.giveExp(e.getRandomAmount(withdrawAmount));
+                            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
+                            break;
+                        }
                     }
                 }
             }
@@ -366,6 +372,9 @@ public class Collector {
 
     /** Attempts to spawn virtual mobs */
     public void attemptSpawn() {
+        if (plugin.getAfkChecker().isAfkCheck() && plugin.getAfkChecker().isAFK(owner)) {
+            return;
+        }
         for (EntityCollector entityCollector : collectorEntities) {
             entityCollector.attemptSpawn(autoSell, owner);
         }
@@ -442,8 +451,7 @@ public class Collector {
         }
     }
 
-    /** Saves collector */
-    public void save() {
+    public void saveSync() {
         switch (plugin.getStoreMethod()) {
             case YAML:
                 config.set("spawners", "");
@@ -461,7 +469,7 @@ public class Collector {
                 break;
             case MYSQL:
                 try {
-                    this.connection = Database.getDataBaseConnection();
+                    Connection connection = Database.getDataBaseConnection();
                     String update = "replace into player_data (owner_uuid, auto_sell) values ('" + owner.getUniqueId().toString() + "', " + autoSell + ")";
                     PreparedStatement updateStatement = connection.prepareStatement(update);
                     updateStatement.execute();
@@ -490,6 +498,11 @@ public class Collector {
             default:
                 throw new IllegalStateException("Invalid data storage method!");
         }
+    }
+
+    /** Saves collector */
+    public void saveAsync() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::saveSync);
     }
 
     public OfflinePlayer getOwner() {

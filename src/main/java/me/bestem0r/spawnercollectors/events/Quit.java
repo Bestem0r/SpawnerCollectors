@@ -18,7 +18,7 @@ public class Quit implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Collector collector = Methods.getCollector(plugin, event.getPlayer());
-        collector.save();
+        collector.saveAsync();
         plugin.collectors.remove(collector);
     }
 }
