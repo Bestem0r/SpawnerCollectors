@@ -1,7 +1,7 @@
 package me.bestem0r.spawnercollectors.events;
 
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utils.ColorBuilder;
+import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -40,7 +40,10 @@ public class AFKChecker implements Listener {
             Player player = event.getPlayer();
 
             if (afkPlayers.contains(player.getUniqueId())) {
-                player.sendMessage(new ColorBuilder(plugin).path("messages.no_longer_afk").addPrefix().build());
+                String message = ConfigManager.getMessage("messages.no_longer_afk");
+                if (!message.equals("")) {
+                    player.sendMessage(message);
+                }
                 afkPlayers.remove(player.getUniqueId());
             }
 
@@ -64,7 +67,7 @@ public class AFKChecker implements Listener {
                     afkPlayers.add(uuid);
                     Player player = Bukkit.getPlayer(uuid);
                     if (player != null) {
-                        player.sendMessage(new ColorBuilder(plugin).path("messages.afk").addPrefix().build());
+                        player.sendMessage(ConfigManager.getMessage("messages.afk"));
                     }
                 }
             }

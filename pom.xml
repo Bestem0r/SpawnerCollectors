@@ -5,9 +5,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
+    <groupId>me.bestem0r.spawnercollectors</groupId>
     <artifactId>SpawnerCollectors</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.7.0-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -23,6 +23,7 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+
         <!-- HeadDatabase-API -->
         <repository>
             <id>headdatabase-api</id>
@@ -32,7 +33,6 @@
             <id>CodeMC</id>
             <url>https://repo.codemc.org/repository/maven-public</url>
         </repository>
-
     </repositories>
 
     <dependencies>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.16.4-R0.1-SNAPSHOT</version>
+            <version>1.17.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -64,14 +64,46 @@
         <dependency>
             <groupId>com.github.cryptomorin</groupId>
             <artifactId>XSeries</artifactId>
-            <version>7.6.0</version>
+            <version>8.5.0.1</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- bStats -->
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
-            <version>1.7</version>
+            <version>2.2.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- AdvancedSpawners -->
+        <dependency>
+            <groupId>gcspawners</groupId>
+            <artifactId>AdvancedSpawnersAPI</artifactId>
+            <version>1.2.6</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/resources/AdvancedSpawners.jar</systemPath>
+        </dependency>
+
+        <!-- MineableSpawners -->
+        <dependency>
+            <groupId>com.dnyferguson.mineablespawners</groupId>
+            <artifactId>MineableSpawners</artifactId>
+            <version>3.1.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/resources/MineableSpawners-3.1.2.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.6.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
@@ -82,24 +114,39 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
+                <version>3.3.0-SNAPSHOT</version>
                 <configuration>
                     <relocations>
                         <relocation>
-                            <pattern>com.cryptomorin.xseries</pattern>
+                            <pattern>com.zaxxer</pattern>
+                            <shadedPattern>me.bestem0r.spawnercollectors.database.hikari</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.slf4j</pattern>
+                            <shadedPattern>me.bestem0r.spawnercollectors.database.slf4j</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.cryptomorin</pattern>
                             <shadedPattern>me.bestem0r.spawnercollectors.utils.xmaterial</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>org.bstats.bukkit</pattern>
-                            <shadedPattern>com.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
+                            <pattern>org.bstats</pattern>
+                            <shadedPattern>me.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
                         </relocation>
                     </relocations>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>
                             <excludes>
+                                <exclude>com/cryptomorin/xseries/XItemStack*</exclude>
+                                <exclude>com/cryptomorin/xseries/XBlock*</exclude>
+                                <exclude>com/cryptomorin/xseries/XEntity*</exclude>
+                                <exclude>com/cryptomorin/xseries/XPotion*</exclude>
+                                <exclude>com/cryptomorin/xseries/XEnchantment*</exclude>
                                 <exclude>com/cryptomorin/xseries/XBiome*</exclude>
                                 <exclude>com/cryptomorin/xseries/NoteBlockMusic*</exclude>
+                                <exclude>com/cryptomorin/xseries/particles/*</exclude>
+                                <exclude>com/cryptomorin/xseries/messages/*</exclude>
                             </excludes>
                         </filter>
                     </filters>

@@ -1,54 +1,49 @@
 package me.bestem0r.spawnercollectors;
 
+import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.commands.CommandModule;
 import me.bestem0r.spawnercollectors.commands.subcommands.*;
+import me.bestem0r.spawnercollectors.database.SQLManager;
 import me.bestem0r.spawnercollectors.events.AFKChecker;
-import me.bestem0r.spawnercollectors.events.BlockPlace;
+import me.bestem0r.spawnercollectors.events.BlockEvent;
 import me.bestem0r.spawnercollectors.events.Join;
 import me.bestem0r.spawnercollectors.events.Quit;
-import me.bestem0r.spawnercollectors.loot.ItemLoot;
-import me.bestem0r.spawnercollectors.utils.ColorBuilder;
-import me.bestem0r.spawnercollectors.utils.Database;
-import me.bestem0r.spawnercollectors.utils.Methods;
+import me.bestem0r.spawnercollectors.loot.LootManager;
+import me.bestem0r.spawnercollectors.menus.MenuListener;
+import me.bestem0r.spawnercollectors.utils.ConfigManager;
+import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.*;
 
 import static me.bestem0r.spawnercollectors.DataStoreMethod.MYSQL;
 import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
 
-public class SCPlugin extends JavaPlugin {
+public final class SCPlugin extends JavaPlugin {
 
     private Economy econ;
 
     public List<Collector> collectors = new ArrayList<>();
-    public Map<EntityType, Double> prices = new HashMap<>();
-    public Map<EntityType, String> materials = new HashMap<>();
 
-    public List<String> log = new ArrayList<>();
+    public static List<String> log = new ArrayList<>();
+
+    private LootManager lootManager;
 
     private final Map<OfflinePlayer, Double> earned = new HashMap<>();
-    private final EnumMap<EntityType, List<ItemLoot>> customLoot = new EnumMap<>(EntityType.class);
-    private final EnumMap<EntityType, Integer> customXP = new EnumMap<>(EntityType.class);
 
-    private boolean usingCustomLoot;
     private boolean usingHeadDB;
     private boolean morePermissions;
-    private boolean giveXP;
     private boolean disablePlace;
 
     private AFKChecker afkChecker;
@@ -59,29 +54,38 @@ public class SCPlugin extends JavaPlugin {
     private int spawnTimeMin;
     private int spawnTimeMax;
 
+    private MenuListener menuListener;
+
+    private SQLManager sqlManager;
     private DataStoreMethod storeMethod = YAML;
 
     @Override
     public void onEnable() {
-        super.onEnable();
-
         Metrics metricsLite = new Metrics(this, 9427);
 
         getConfig().options().copyDefaults();
         saveDefaultConfig();
         reloadConfig();
 
+        ConfigManager.setConfig(getConfig());
+        ConfigManager.setPrefixPath("prefix");
+
         Bukkit.getPluginManager().registerEvents(new Join(this), this);
         Bukkit.getPluginManager().registerEvents(new Quit(this), this);
-        Bukkit.getPluginManager().registerEvents(new BlockPlace(this), this);
+        Bukkit.getPluginManager().registerEvents(new BlockEvent(this), this);
         this.afkChecker = new AFKChecker(this);
+        this.menuListener = new MenuListener(this);
+        Bukkit.getPluginManager().registerEvents(menuListener, this);
         Bukkit.getPluginManager().registerEvents(afkChecker, this);
 
+        this.lootManager = new LootManager(this);
         setupEconomy();
         loadValues();
 
         if (storeMethod == MYSQL) {
-            Database.setup(this);
+            sqlManager = new SQLManager(this);
+            sqlManager.setupEntityData();
+            sqlManager.setupPlayerData();
         }
 
         startSpawners();
@@ -93,39 +97,38 @@ public class SCPlugin extends JavaPlugin {
                 .addSubCommand("spawners", new SpawnersCommand(this))
                 .addSubCommand("givespawner", new GiveSpawnerCommand(this))
                 .addSubCommand("open", new OpenCommand(this))
+                .addSubCommand("migrate", new MigrateCommand(this))
                 .build();
         commandModule.register("sc");
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            collectors.add(new Collector(this, player));
+            collectors.add(new Collector(this, player.getUniqueId()));
         }
+
+        Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.0-#3 of SpawnerCollectors! Please expect and report all bugs in my discord server");
+
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            collectors.forEach(Collector::saveSync);
+        }, getConfig().getLong("auto_save") * 20, getConfig().getLong("auto_save") * 20);
     }
 
     @Override
     public void onDisable() {
-        super.onDisable();
         saveLog();
         for (Collector collector : collectors) {
             collector.saveSync();
+
         }
         if (storeMethod == MYSQL) {
-            try {
-                Database.getDataBaseConnection().close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            this.getSqlManager().onDisable();
         }
-
-        Bukkit.getScheduler().cancelTasks(this);
     }
 
     /** Loads values from config */
     private void loadValues() {
         this.usingHeadDB = getConfig().getBoolean("use_headdb");
-        this.usingCustomLoot = getConfig().getBoolean("custom_loot_tables.enable");
         this.maxSpawners = getConfig().getInt("max_spawners");
         this.morePermissions = getConfig().getBoolean("more_permissions");
-        this.giveXP = getConfig().getBoolean("give_xp");
         this.storeMethod = DataStoreMethod.valueOf(getConfig().getString("data_storage_method"));
         this.disablePlace = getConfig().getBoolean("disable_spawner_placing");
         if (usingHeadDB && !Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
@@ -135,8 +138,7 @@ public class SCPlugin extends JavaPlugin {
         this.spawnAmount = getConfig().getInt("spawner.spawns");
         this.spawnTimeMin = getConfig().getInt("spawner.min_time");
         this.spawnTimeMax = getConfig().getInt("spawner.max_time");
-        loadCustomLoot();
-        loadEntities();
+        lootManager.load();
     }
 
     /** Saves log */
@@ -161,23 +163,11 @@ public class SCPlugin extends JavaPlugin {
         reloadConfig();
         saveDefaultConfig();
 
-        if (getStoreMethod() == MYSQL) {
-            try {
-                Database.getDataBaseConnection().close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
 
         Bukkit.getScheduler().cancelTasks(this);
         saveLog();
-        prices.clear();
-        materials.clear();
+        lootManager.load();
         loadValues();
-
-        if (storeMethod == MYSQL) {
-            Database.setup(this);
-        }
 
         startSpawners();
         startMessages();
@@ -195,74 +185,26 @@ public class SCPlugin extends JavaPlugin {
     /** Async message thread for earned money by auto-sell */
     private void startMessages() {
         int minutes = getConfig().getInt("notify_interval");
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            for (OfflinePlayer offlinePlayer : earned.keySet()) {
+        if (minutes > 0) {
+            Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+                for (OfflinePlayer offlinePlayer : earned.keySet()) {
 
-                if (offlinePlayer.isOnline()) {
-                    Player player = offlinePlayer.getPlayer();
-                    if (player == null) { continue; }
+                    if (offlinePlayer.isOnline()) {
+                        Player player = offlinePlayer.getPlayer();
+                        if (player == null) { continue; }
 
-                    double playerEarned = Math.round(earned.get(offlinePlayer) * 100.0) / 100.0;
-                    player.sendMessage(new ColorBuilder(this).path("messages.earned_notify")
-                            .replaceWithCurrency("%worth%", String.valueOf(playerEarned))
-                            .replace("%time%", String.valueOf(minutes))
-                            .addPrefix()
-                            .build());
-                    Methods.playSound(this, player, "notification");
+                        //Bukkit.getLogger().info("Sending message: " + earned.get(offlinePlayer));
+                        double playerEarned = Math.round(earned.get(offlinePlayer) * 100.0) / 100.0;
+                        player.sendMessage(ConfigManager.getCurrencyBuilder("messages.earned_notify")
+                                .replaceCurrency("%worth%", BigDecimal.valueOf(playerEarned))
+                                .replace("%time%", String.valueOf(minutes))
+                                .addPrefix()
+                                .build());
+                        SpawnerUtils.playSound(this, player, "notification");
+                    }
                 }
-            }
-            earned.clear();
-        }, (long) minutes * 20 * 60, (long) minutes * 20 * 60);
-    }
-
-    /** Loads custom loot tables from config */
-    private void loadCustomLoot() {
-
-        customLoot.clear();
-        customXP.clear();
-        if (!usingCustomLoot) { return; }
-        ConfigurationSection mobs = getConfig().getConfigurationSection("custom_loot_tables.mobs");
-        if (mobs != null) {
-            for (String mob : mobs.getKeys(false)) {
-
-                EntityType entityType = EntityType.valueOf(mob);
-                ConfigurationSection items = getConfig().getConfigurationSection("custom_loot_tables.mobs." + mob);
-                for (String item : items.getKeys(false)) {
-
-                    Material material = Material.valueOf(item);
-                    Bukkit.getLogger().info("Loaded " + material);
-                    double probability = getConfig().getDouble("custom_loot_tables.mobs." + mob + "." + item + ".probability");
-                    int min = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".min");
-                    int max = getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".max");
-
-                    List<ItemLoot> loot = (customLoot.containsKey(entityType) ? customLoot.get(entityType) : new ArrayList<>());
-                    loot.add(new ItemLoot(material, probability, min, max));
-                    customLoot.put(entityType, loot);
-                }
-                Bukkit.getLogger().info(mob + " | " + customLoot.get(entityType).size());
-            }
-        }
-        ConfigurationSection xp = getConfig().getConfigurationSection("custom_xp.mobs");
-        if (xp != null) {
-            for (String mob : xp.getKeys(false)) {
-
-                EntityType entityType = EntityType.valueOf(mob);
-                customXP.put(entityType, getConfig().getInt("custom_xp.mobs." + mob));
-            }
-        }
-    }
-
-    /** Load entity prices and material strings */
-    private void loadEntities() {
-        ConfigurationSection priceSection = getConfig().getConfigurationSection("prices");
-        if (priceSection == null) { return; }
-        for (String entity : priceSection.getKeys(false)) {
-            prices.put(EntityType.valueOf(entity), getConfig().getDouble("prices." + entity));
-        }
-        ConfigurationSection materialSection = getConfig().getConfigurationSection("materials");
-        if (materialSection == null) { return; }
-        for (String entity : materialSection.getKeys(false)) {
-            materials.put(EntityType.valueOf(entity), getConfig().getString("materials." + entity));
+                earned.clear();
+            }, (long) minutes * 20 * 60, (long) minutes * 20 * 60);
         }
     }
 
@@ -284,14 +226,8 @@ public class SCPlugin extends JavaPlugin {
     public boolean isUsingHeadDB() {
         return usingHeadDB;
     }
-    public boolean isUsingCustomLoot() {
-        return usingCustomLoot;
-    }
-    public EnumMap<EntityType, List<ItemLoot>> getCustomLoot() {
-        return customLoot;
-    }
-    public EnumMap<EntityType, Integer> getCustomXP() {
-        return customXP;
+    public LootManager getLootManager() {
+        return lootManager;
     }
     public DataStoreMethod getStoreMethod() {
         return storeMethod;
@@ -301,9 +237,6 @@ public class SCPlugin extends JavaPlugin {
     }
     public boolean isMorePermissions() {
         return morePermissions;
-    }
-    public boolean doGiveXP() {
-        return giveXP;
     }
     public boolean isDisablePlace() {
         return disablePlace;
@@ -320,12 +253,46 @@ public class SCPlugin extends JavaPlugin {
     public AFKChecker getAfkChecker() {
         return afkChecker;
     }
+    public SQLManager getSqlManager() {
+        return sqlManager;
+    }
+    public MenuListener getMenuListener() {
+        return menuListener;
+    }
+
+    public void setStoreMethod(DataStoreMethod storeMethod) {
+        this.storeMethod = storeMethod;
+        if (storeMethod == MYSQL) {
+            if (sqlManager != null) {
+                sqlManager.onDisable();
+            }
+            this.sqlManager = new SQLManager(this);
+            sqlManager.setupPlayerData();
+            sqlManager.setupPlayerData();
+        }
+    }
+
+    public void loadAll() {
+        if (storeMethod == YAML) {
+            collectors.forEach(Collector::saveSync);
+            for (File file : new File(getDataFolder() + "/collectors/").listFiles()) {
+                collectors.add(new Collector(this, UUID.fromString(file.getName().split(".")[0])));
+            }
+        }
+    }
+
+    public void saveAll() {
+        collectors.forEach(Collector::saveSync);
+    }
 
     /** Earned message methods */
     public void addEarned(OfflinePlayer player, double amount) {
         if (earned.containsKey(player)) {
+            //Bukkit.getLogger().info("Previous amount: " + earned.get(player));
             earned.replace(player, earned.get(player) + amount);
+            //Bukkit.getLogger().info("New amount: " + earned.get(player));
         } else {
+            //Bukkit.getLogger().info("No previous amount!");
             earned.put(player, amount);
         }
     }

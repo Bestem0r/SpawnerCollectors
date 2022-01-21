@@ -5,11 +5,14 @@ prefix: "&8[&eSpawners&8]"
 #How often should the plugin check if new virtual mobs should spawn? (Seconds)
 spawn_interval: 1
 #How often should the players receive a "earned by auto-sell notification"? (Minutes)
+#Set to 0 to disable
 notify_interval: 1
 #Currency symbol
 currency: '$'
 #Should the currency symbol be placed before the price?
 currency_before: false
+#Drop spawner item when spawner is broken with silktouch
+enable_silktouch: true
 #Item name for withdrawn spawners (Placeholder: %entity%)
 spawner_withdraw_name: "&r%entity% Spawner"
 #Maximum allowed spawner amount per entity type (0 for unlimited)
@@ -17,6 +20,8 @@ spawner_withdraw_name: "&r%entity% Spawner"
 max_spawners: 0
 #Should an action log be saved on plugin/server reload?
 log: true
+#Auto-save interval (seconds)
+auto_save: 30
 #Require permissions for sell, withdraw, auto-sell
 #These permissions are:
 # - spawnercollectors.sell,
@@ -36,6 +41,13 @@ give_xp: true
 #This will disable placing spawners on the ground. Can be
 #bypassed with 'spawnercollectors.bypass_place'
 disable_spawner_placing: false
+#Cancel overflowing items instead of dropping them on the ground
+cancel_overflowing_items: true
+#Maximum amount of mobs of a certain type the collector
+#should be able to hold. Use 0 to disable
+max_mobs: 1000
+#Cooldown in milliseconds between mob withdrawals
+withdraw_cooldown: 500
 #Enable this to turn off collectors for AFK players
 afk:
   enable: true
@@ -60,8 +72,8 @@ password: password123
 spawner:
   #How many mobs are spawned for every spawn
   spawns: 4
-  min_time: 1 #Second
-  max_time: 2 #Second
+  min_time: 10 #Second
+  max_time: 40 #Second
 
 
 
@@ -85,6 +97,8 @@ messages:
   no_permission_place_spawner: "&cYou do not have permissions to place spawners!"
   afk: "&cYou are now AFK. Collectors are turned off!"
   no_longer_afk: "&aYou are no longer AFK. Collectors working normally"
+  withdraw_too_fast: "&cYou are withdrawing too fast!"
+  inventory_full: "&cYour inventory is full!"
 
 sounds:
   spawners_open: BLOCK_CHEST_OPEN
@@ -119,6 +133,7 @@ menus:
 
   #Items used in menus
   items:
+    auto_sell_slot: 50
     auto_sell_true:
       material: LIME_TERRACOTTA
       name: "&aAuto-sell enabled"
@@ -137,18 +152,21 @@ menus:
       lore:
         - ""
     mobs:
+      slot: 48
       material: SKELETON_SPAWN_EGG
       name: "&eSwitch to mobs"
       lore:
         - "&7>> Click to switch"
         - "&7to mob view!"
     spawners:
+      slot: 48
       material: SPAWNER
       name: "&eSwitch to spawners"
       lore:
         - "&7>> Click to switch"
         - "&7to spawners view!"
     sell_all:
+      slot: 49
       material: GOLD_INGOT
       name: "&aSell all"
       lore:
@@ -164,6 +182,8 @@ menus:
 prices:
   SKELETON: 50
   ZOMBIE: 10
+  COW: 5
+  PIG: 5
 
 #--------------------- Mob materials ---------------------#
 
@@ -173,8 +193,10 @@ use_headdb: false
 #materials, enable HeadDB above and place 'hdb:' in front
 #of the id! E.g. hdb:10000
 materials:
-  SKELETON: SKELETON_SPAWN_EGG
-  ZOMBIE: ZOMBIE_SPAWN_EGG
+  ZOMBIE: ZOMBIE_HEAD #4187 recommended for HeadDB
+  SKELETON: SKELETON_SKULL #22402 recommended for HeadDB
+  COW: BEEF #335 recommended for HeadDB
+  PIG: PORKCHOP #337 recommended for HeadDB
 
 
 #------------------- Custom loot tables -------------------#
@@ -190,16 +212,46 @@ custom_loot_tables:
       #Material
       BONE:
         #Probability of receiving this item
-        probability: 1.0
+        probability: 1
         #Minimum amount
-        min: 1
+        min: 0
         #Maximum amount
-        max: 4
-
+        max: 2
       ARROW:
-        probability: 0.8
-        min: 3
-        max: 6
+        probability: 1
+        min: 0
+        max: 2
+    ZOMBIE:
+      ROTTEN_FLESH:
+        probability: 1
+        min: 0
+        max: 2
+      POTATO:
+        probability: 0.025
+        min: 1
+        max: 1
+      IRON_INGOT:
+        probability: 0.025
+        min: 1
+        max: 1
+      CARROT:
+        probability: 0.025
+        min: 1
+        max: 1
+    COW:
+      LEATHER:
+        probability: 1
+        min: 0
+        max: 2
+      BEEF:
+        probability: 1
+        min: 1
+        max: 3
+    PIG:
+      PORKCHOP:
+        probability: 1
+        min: 1
+        max: 3
 
 #Enabled if custom_loot_tables is enabled
 custom_xp:

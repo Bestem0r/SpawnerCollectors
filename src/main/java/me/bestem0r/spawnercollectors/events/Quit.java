@@ -1,8 +1,8 @@
 package me.bestem0r.spawnercollectors.events;
 
-import me.bestem0r.spawnercollectors.Collector;
+import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utils.Methods;
+import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -17,8 +17,8 @@ public class Quit implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        Collector collector = Methods.getCollector(plugin, event.getPlayer());
-        collector.saveAsync();
+        Collector collector = SpawnerUtils.getCollector(plugin, event.getPlayer());
         plugin.collectors.remove(collector);
+        collector.saveAsync();
     }
 }

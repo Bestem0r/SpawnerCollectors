@@ -1,50 +1,129 @@
 package me.bestem0r.spawnercollectors.menus;
 
-import me.bestem0r.spawnercollectors.EntityCollector;
+import com.cryptomorin.xseries.XMaterial;
+import me.bestem0r.spawnercollectors.CustomEntityType;
+import me.bestem0r.spawnercollectors.collector.Collector;
+import me.bestem0r.spawnercollectors.collector.EntityCollector;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utils.ColorBuilder;
-import me.bestem0r.spawnercollectors.utils.Methods;
+import me.bestem0r.spawnercollectors.utils.ConfigManager;
+import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-public class SpawnerMenu {
+public class SpawnerMenu extends Menu {
 
-    public static Inventory create(SCPlugin plugin, List<EntityCollector> collected, boolean autoSell) {
-        Inventory inventory = Bukkit.createInventory(null, 54, new ColorBuilder(plugin).path("menus.spawners.title").build());
-        ItemStack[] items = new ItemStack[54];
+    private final Collector collector;
+
+    public SpawnerMenu(MenuListener listener, Collector collector) {
+        super(listener, 54,  ConfigManager.getString("menus.spawners.title"));
+        this.collector = collector;
+    }
+
+    @Override
+    protected void create(Inventory inventory) {
+
+        fillBottom(ConfigManager.getItem("menus.items.filler").build());
+        inventory.setItem(ConfigManager.getInt("menus.items.mobs.slot"), ConfigManager.getItem("menus.items.mobs").build());
+
+        update(inventory);
+    }
+
+    @Override
+    protected void update(Inventory inventory) {
         double totalWorth = 0;
 
-        for (int i = 0; i < collected.size(); i++) {
-            if (i == 54) { break; }
-            items[i] = collected.get(i).getSpawnerItem();
-            totalWorth += collected.get(i).getTotalWorth();
+        for (int i = 0; i < 45; i++) {
+            if (i < collector.getCollectorEntities().size()) {
+                inventory.setItem(i, collector.getCollectorEntities().get(i).getSpawnerItem());
+                totalWorth += collector.getCollectorEntities().get(i).getTotalWorth();
+            } else {
+                inventory.setItem(i, null);
+            }
         }
 
-        ItemStack filler = Methods.itemFromConfig(plugin, "menus.items.filler");
+        inventory.setItem(ConfigManager.getInt("menus.items.sell_all.slot"), ConfigManager.getItem("menus.items.sell_all")
+                .replaceCurrency("%worth%", BigDecimal.valueOf(totalWorth)).build());
 
-        for (int i = 45; i < 54; i++) {
-            items[i] = filler;
+        inventory.setItem(ConfigManager.getInt("menus.items.auto_sell_slot"), ConfigManager.getItem("menus.items.auto_sell_" + collector.isAutoSell()).build());
+    }
+
+    @Override
+    public void handleClick(InventoryClickEvent event) {
+        int slot = event.getRawSlot();
+
+        event.setCancelled(true);
+
+        Player player = (Player) event.getWhoClicked();
+        ItemStack currentItem = event.getCurrentItem();
+
+
+        boolean morePermissions = ConfigManager.getBoolean("more_permissions");
+
+        if (slot == ConfigManager.getInt("menus.items.mobs.slot")) {
+            if (morePermissions && !player.hasPermission("spawnercollectors.command.mobs")) {
+                player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
+            } else {
+                collector.openEntityMenu(player);
+            }
+            return;
         }
+        if (slot == ConfigManager.getInt("menus.items.sell_all.slot")) {
+            collector.sellAll(player);
+            return;
+        }
+        if (slot == ConfigManager.getInt("menus.items.auto_sell_slot")) {
+            collector.toggleAutoSell(player);
+            return;
+        }
+        //Add spawner
+        if (slot >= event.getView().getTopInventory().getSize() && currentItem != null) {
+            if (currentItem.getType() == XMaterial.SPAWNER.parseMaterial()) {
+                CustomEntityType type = SpawnerUtils.typeFromSpawner(currentItem);
+                if (type != null && collector.addSpawner(player, type, currentItem.getAmount())) {
+                    player.getInventory().setItem(event.getSlot(), null);
+                }
+            }
+        }
+        //Withdraw spawner
+        if (slot < 54) {
+            if (slot >= collector.getCollectorEntities().size() || slot < 0) { return; }
+            if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.spawner")) {
+                player.sendMessage(ConfigManager.getMessage("messages.no_permission_withdraw_spawner"));
+                return;
+            }
 
-        ItemStack switchMenu = Methods.itemFromConfig(plugin, "menus.items.mobs");
-        items[48] = switchMenu;
+            EntityCollector collected = collector.getCollectorEntities().get(slot);
+            if (collected == null) { return; }
 
-        ItemStack sellAll = Methods.itemFromConfig(plugin, "menus.items.sell_all");
-        ItemMeta sellAllMeta = sellAll.getItemMeta();
-        sellAllMeta.setLore(new ColorBuilder(plugin).path("menus.items.sell_all.lore")
-                .replaceWithCurrency("%worth%", String.valueOf(totalWorth)).buildLore());
-        sellAll.setItemMeta(sellAllMeta);
-        items[49] = sellAll;
+            int withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
 
-        ItemStack autoSellItem = Methods.itemFromConfig(plugin, "menus.items.auto_sell_" + autoSell);
-        items[50] = autoSellItem;
+            ItemStack spawner = SpawnerUtils.spawnerFromType(collected.getEntityType(), withdrawAmount);
 
-        inventory.setContents(items);
+            Map<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
+            for (int i : drop.keySet()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
+            }
+            collected.removeSpawners(withdrawAmount);
 
-        return inventory;
+            if (collected.getSpawnerAmount() < 1) {
+                collector.sell(player, collected);
+                collector.getCollectorEntities().remove(collected);
+                collector.updateEntityMenu();
+            }
+
+            player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
+            SCPlugin.log.add(ChatColor.stripColor(new Date() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + collected.getEntityType() + " Spawner"));
+            update();
+        }
     }
 }

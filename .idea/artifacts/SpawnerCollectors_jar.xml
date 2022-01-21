@@ -1,9 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="SpawnerCollectors:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/SpawnerCollectors_jar</output-path>
-    <root id="archive" name="SpawnerCollectors.jar">
-      <element id="module-output" name="SpawnerCollectors" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/cryptomorin/XSeries/7.6.0/XSeries-7.6.0.jar" path-in-jar="/" />
-    </root>
-  </artifact>
-</component>

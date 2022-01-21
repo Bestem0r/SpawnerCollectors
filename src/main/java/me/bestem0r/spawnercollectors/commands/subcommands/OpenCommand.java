@@ -1,10 +1,10 @@
 package me.bestem0r.spawnercollectors.commands.subcommands;
 
-import me.bestem0r.spawnercollectors.Collector;
+import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.commands.CommandModule;
 import me.bestem0r.spawnercollectors.commands.SubCommand;
-import me.bestem0r.spawnercollectors.utils.Methods;
+import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -53,7 +53,7 @@ public class OpenCommand implements SubCommand {
                 return;
             }
 
-            Collector collector = Methods.getCollector(this.plugin, target);
+            Collector collector = SpawnerUtils.getCollector(this.plugin, target);
 
             switch(args[2]) {
                 case "mobs":
@@ -64,9 +64,6 @@ public class OpenCommand implements SubCommand {
             }
         }
 
-    }
-
-    public void setModule(CommandModule module) {
     }
 
     public String getDescription() {

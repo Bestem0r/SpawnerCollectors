@@ -3,7 +3,7 @@ package me.bestem0r.spawnercollectors.commands.subcommands;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.commands.CommandModule;
 import me.bestem0r.spawnercollectors.commands.SubCommand;
-import me.bestem0r.spawnercollectors.utils.Methods;
+import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -27,13 +27,8 @@ public class MobsCommand implements SubCommand {
     public void run(CommandSender sender, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            Methods.getCollector(plugin, player).openEntityMenu(player);
+            SpawnerUtils.getCollector(plugin, player).openEntityMenu(player);
         }
-    }
-
-    @Override
-    public void setModule(CommandModule module) {
-
     }
 
     @Override

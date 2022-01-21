@@ -10,7 +10,5 @@ public interface SubCommand {
 
     void run(CommandSender sender, String[] args);
 
-    void setModule(CommandModule module);
-
     String getDescription();
 }

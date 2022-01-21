@@ -1,8 +1,7 @@
 package me.bestem0r.spawnercollectors.commands;
 
-import me.bestem0r.spawnercollectors.utils.ColorBuilder;
+import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -35,7 +34,6 @@ public class CommandModule implements CommandExecutor, TabCompleter {
         }
         public CommandModule build() {
             CommandModule commandModule = new CommandModule();
-            subCommands.forEach((k, v) -> v.setModule(commandModule));
             commandModule.subCommands = subCommands;
             commandModule.plugin = plugin;
             return commandModule;
@@ -60,11 +58,11 @@ public class CommandModule implements CommandExecutor, TabCompleter {
             commandModule.subCommands.forEach((k, v) -> {
                 help.add("> /" + parentCommand + " " + k + ": §e" + v.getDescription());
             });
-            help.forEach(s -> commandModule.commandOutput(sender, s));
+            help.forEach(s -> sender.sendMessage(s));
         }
-        @Override
-        public void setModule(CommandModule module) {
-            this.commandModule = module;
+
+        public void setCommandModule(CommandModule commandModule) {
+            this.commandModule = commandModule;
         }
 
         @Override
@@ -75,33 +73,24 @@ public class CommandModule implements CommandExecutor, TabCompleter {
 
     public void register(String command) {
         HelpCommand helpCommand = new HelpCommand(command);
-        helpCommand.setModule(this);
+        helpCommand.setCommandModule(this);
         subCommands.put("help", helpCommand);
 
         plugin.getCommand(command).setExecutor(this);
         plugin.getCommand(command).setTabCompleter(this);
     }
 
-    public void commandOutput(CommandSender sender, String message) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            player.sendMessage(message);
-        } else {
-            Bukkit.getLogger().info(message);
-        }
-    }
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
         if (args.length == 0 || !subCommands.containsKey(args[0])) {
-            commandOutput(sender, new ColorBuilder(plugin).path("messages.invalid_command_usage").addPrefix().build());
+            sender.sendMessage(ConfigManager.getMessage("messages.invalid_command_usage"));
             return true;
         }
 
         if (sender instanceof Player) {
             Player player = (Player) sender;
             if (!player.hasPermission("spawnercollectors.command." + args[0])) {
-                player.sendMessage(new ColorBuilder(plugin).path("messages.no_permission_command").addPrefix().build());
+                player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
                 return true;
             }
         }
@@ -115,7 +104,6 @@ public class CommandModule implements CommandExecutor, TabCompleter {
         if (args.length == 0 || args[0].length() == 0) {
             return new ArrayList<>(subCommands.keySet());
         }
-
         //Tab completion for registered sub-commands
         if (args.length == 1) {
             return subCommands.keySet().stream()

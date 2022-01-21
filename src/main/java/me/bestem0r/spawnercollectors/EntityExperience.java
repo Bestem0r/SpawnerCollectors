@@ -72,9 +72,7 @@ public enum EntityExperience {
     GUARDIAN(10, 10),
 
     RAVAGER(50, 50),
-    PIGLIN_BRUTE(50, 50)
-
-    ;
+    PIGLIN_BRUTE(50, 50);
 
     private final int min;
     private final int max;
@@ -85,7 +83,7 @@ public enum EntityExperience {
 
     }
 
-    public int getRandomAmount(int amount) {
+    public int getRandomAmount(long amount) {
         int xp = 0;
         for (int i = 0; i < amount; i++) {
             xp += ThreadLocalRandom.current().nextInt(min, max + 1);
