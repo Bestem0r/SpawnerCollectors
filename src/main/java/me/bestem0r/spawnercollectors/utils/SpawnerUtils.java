@@ -3,6 +3,7 @@ package me.bestem0r.spawnercollectors.utils;
 import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XSound;
 import com.dnyferguson.mineablespawners.MineableSpawners;
+import de.dustplanet.util.SilkUtil;
 import gcspawners.ASAPI;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
@@ -29,12 +30,7 @@ public class SpawnerUtils {
 
     /** Returns collector based on Player */
     public static Collector getCollector(SCPlugin plugin, Player player) {
-        for (Collector collector : plugin.collectors) {
-            if (collector.getOwner().getUniqueId() == player.getUniqueId()) {
-                return collector;
-            }
-        }
-        return new Collector(plugin, player.getUniqueId());
+        return plugin.collectors.get(player.getUniqueId());
     }
 
     /** Returns spawner with set EntityType */
@@ -44,6 +40,9 @@ public class SpawnerUtils {
            ItemStack i = MineableSpawners.getApi().getSpawnerFromEntityType(type.getEntityType());
            i.setAmount(amount);
            return i;
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
+             return  SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.getEntityType().name(), "", amount, false);
         }
 
         ItemStack itemStack = new ItemStack(XMaterial.SPAWNER.parseMaterial(), amount);
@@ -85,16 +84,17 @@ public class SpawnerUtils {
                     return new CustomEntityType(type);
                 }
             }
+            if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
+                String name = SilkUtil.hookIntoSilkSpanwers().getStoredSpawnerItemEntityID(itemStack);
+                if (name != null) {
+                    return new CustomEntityType(name);
+                }
+            }
 
             //Lots of casting...
             ItemMeta itemMeta = itemStack.getItemMeta();
             BlockStateMeta blockStateMeta = (BlockStateMeta) itemMeta;
             BlockState blockState = blockStateMeta.getBlockState();
-
-            if (Bukkit.getPluginManager().isPluginEnabled("AdvancedSpawners")) {
-                Block block = blockState.getBlock();
-                return new CustomEntityType(ASAPI.getSpawnerType(block));
-            }
 
             CreatureSpawner spawner = (CreatureSpawner) blockState;
             return new CustomEntityType(spawner.getSpawnedType());

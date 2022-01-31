@@ -1,6 +1,7 @@
 package me.bestem0r.spawnercollectors.collector;
 
 import me.bestem0r.spawnercollectors.CustomEntityType;
+import me.bestem0r.spawnercollectors.DataStoreMethod;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.menus.EntityMenu;
 import me.bestem0r.spawnercollectors.menus.Menu;
@@ -11,7 +12,6 @@ import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -40,7 +40,7 @@ public class Collector {
     private boolean autoSell;
 
     private boolean loaded = false;
-    private final List<Runnable> loadEvents = new ArrayList<>();
+    //private final List<Runnable> loadEvents = new ArrayList<>();
 
     public Collector(SCPlugin plugin, UUID uuid) {
         this.plugin = plugin;
@@ -56,9 +56,9 @@ public class Collector {
                     loadYAML();
             }
             loaded = true;
-            loadEvents.forEach(Runnable::run);
-            loadEvents.clear();
-        }, 25L);
+            //loadEvents.forEach(Runnable::run);
+            //loadEvents.clear();
+        }, plugin.getStoreMethod() == DataStoreMethod.MYSQL ? ConfigManager.getInt("load_delay") : 1L);
     }
 
     private void loadYAML() {
@@ -79,7 +79,7 @@ public class Collector {
     private void loadMYSQL() {
         plugin.getSqlManager().loadPlayerData(this);
         this.collectorEntities.clear();
-        this.collectorEntities.addAll(plugin.getSqlManager().getEntityCollectors(owner.getUniqueId()));
+        this.collectorEntities.addAll(plugin.getSqlManager().getEntityCollectors(uuid));
     }
 
     /** Adds spawner */
@@ -88,6 +88,7 @@ public class Collector {
             player.sendMessage(ConfigManager.getMessage("messages.not_supported"));
             return false;
         }
+        //Bukkit.getLogger().info("EntityType: " + type.name());
         //Check if owner has permission for mob
         if (player != null && this.plugin.isMorePermissions() && !this.owner.isOp() && this.owner.getEffectivePermissions().stream()
                 .noneMatch((s) -> s.getPermission().startsWith("spawnercollectors.spawner." + type.name().toLowerCase()))) {
@@ -118,6 +119,11 @@ public class Collector {
             return false;
         }
 
+        if (!loaded) {
+            player.sendMessage(ConfigManager.getMessage("messages.not_loaded"));
+            return false;
+        }
+
         Optional<EntityCollector> optionalCollector = this.collectorEntities.stream().filter((c) -> c.getEntityType().name().equals(type.name())).findAny();
 
         if (optionalCollector.isPresent()) {
@@ -133,15 +139,10 @@ public class Collector {
                 player.sendMessage(ConfigManager.getMessage("messages.reached_max_spawners").replace("%max%", String.valueOf(max)));
                 return false;
             }
-            if (loaded) {
-                collector.addSpawner(amount);
-            } else {
-                loadEvents.add(() -> collector.addSpawner(amount));
-            }
-        } else if (loaded) {
+
+            collector.addSpawner(amount);
+        } else  {
             this.collectorEntities.add(new EntityCollector(this.plugin, type, 0, amount));
-        } else {
-            loadEvents.add(() -> this.collectorEntities.add(new EntityCollector(this.plugin, type, 0, amount)));
         }
 
         if (player != null) {
@@ -346,8 +347,8 @@ public class Collector {
             this.entityMenu.update();
         }
     }
-    
-    public OfflinePlayer getOwner() {
-        return owner;
+
+    public UUID getUuid() {
+        return uuid;
     }
 }

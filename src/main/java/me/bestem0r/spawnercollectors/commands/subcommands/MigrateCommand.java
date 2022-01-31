@@ -36,7 +36,7 @@ public class MigrateCommand implements SubCommand {
                 plugin.saveAll();
                 plugin.collectors.clear();
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    plugin.collectors.add(new Collector(plugin, player.getUniqueId()));
+                    plugin.collectors.put(player.getUniqueId(), new Collector(plugin, player.getUniqueId()));
                 }
                 sender.sendMessage("§aSuccessfully migrated from YAML to MySQL!");
             }

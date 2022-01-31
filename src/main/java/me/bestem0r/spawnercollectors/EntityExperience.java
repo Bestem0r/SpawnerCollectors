@@ -1,7 +1,5 @@
 package me.bestem0r.spawnercollectors;
 
-import org.bukkit.entity.EntityType;
-
 import java.util.concurrent.ThreadLocalRandom;
 
 public enum EntityExperience {

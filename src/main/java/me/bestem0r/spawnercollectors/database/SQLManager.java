@@ -75,7 +75,7 @@ public class SQLManager {
             connection = pool.getConnection();
 
             statement = connection.prepareStatement("REPLACE INTO player_data (owner_uuid, auto_sell) values (?,?)");
-            statement.setString(1, collector.getOwner().getUniqueId().toString());
+            statement.setString(1, collector.getUuid().toString());
             statement.setBoolean(2, collector.isAutoSell());
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -93,7 +93,7 @@ public class SQLManager {
             connection = pool.getConnection();
 
             statement = connection.prepareStatement("DELETE FROM entity_data WHERE owner_uuid = ?");
-            statement.setString(1, collector.getOwner().getUniqueId().toString());
+            statement.setString(1, collector.getUuid().toString());
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -134,7 +134,7 @@ public class SQLManager {
             connection = pool.getConnection();
 
             statement = connection.prepareStatement("SELECT * FROM player_data WHERE owner_uuid = ?");
-            statement.setString(1, collector.getOwner().getUniqueId().toString());
+            statement.setString(1, collector.getUuid().toString());
 
             result = statement.executeQuery();
 

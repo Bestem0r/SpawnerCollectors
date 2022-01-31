@@ -1,5 +1,6 @@
 package me.bestem0r.spawnercollectors;
 
+import de.dustplanet.silkspawners.SilkSpawners;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.commands.CommandModule;
 import me.bestem0r.spawnercollectors.commands.subcommands.*;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static me.bestem0r.spawnercollectors.DataStoreMethod.MYSQL;
 import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
@@ -34,7 +36,7 @@ public final class SCPlugin extends JavaPlugin {
 
     private Economy econ;
 
-    public List<Collector> collectors = new ArrayList<>();
+    public Map<UUID, Collector> collectors = new HashMap<>();
 
     public static List<String> log = new ArrayList<>();
 
@@ -102,20 +104,22 @@ public final class SCPlugin extends JavaPlugin {
         commandModule.register("sc");
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            collectors.add(new Collector(this, player.getUniqueId()));
+            collectors.put(player.getUniqueId(), new Collector(this, player.getUniqueId()));
         }
 
-        Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.0-#3 of SpawnerCollectors! Please expect and report all bugs in my discord server");
+        Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.0-#7 of SpawnerCollectors! Please expect and report all bugs in my discord server");
 
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            collectors.forEach(Collector::saveSync);
-        }, getConfig().getLong("auto_save") * 20, getConfig().getLong("auto_save") * 20);
+        if (getConfig().getLong("auto_save") > 0) {
+            Bukkit.getScheduler().runTaskTimer(this, () -> {
+                collectors.values().forEach(Collector::saveAsync);
+            }, getConfig().getLong("auto_save") * 20, getConfig().getLong("auto_save") * 20);
+        }
     }
 
     @Override
     public void onDisable() {
         saveLog();
-        for (Collector collector : collectors) {
+        for (Collector collector : collectors.values()) {
             collector.saveSync();
 
         }
@@ -177,7 +181,8 @@ public final class SCPlugin extends JavaPlugin {
     private void startSpawners() {
         long timer = 20L * getConfig().getInt("spawn_interval");
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            for (Collector collector : collectors) {
+
+            for (Collector collector : collectors.values()) {
                 collector.attemptSpawn();
             }
         }, timer, timer);
@@ -274,15 +279,15 @@ public final class SCPlugin extends JavaPlugin {
 
     public void loadAll() {
         if (storeMethod == YAML) {
-            collectors.forEach(Collector::saveSync);
+            collectors.values().forEach(Collector::saveSync);
             for (File file : new File(getDataFolder() + "/collectors/").listFiles()) {
-                collectors.add(new Collector(this, UUID.fromString(file.getName().split(".")[0])));
+                collectors.values().add(new Collector(this, UUID.fromString(file.getName().split(".")[0])));
             }
         }
     }
 
     public void saveAll() {
-        collectors.forEach(Collector::saveSync);
+        collectors.values().forEach(Collector::saveSync);
     }
 
     /** Earned message methods */

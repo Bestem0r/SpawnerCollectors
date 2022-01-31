@@ -2,6 +2,7 @@ package me.bestem0r.spawnercollectors.events;
 
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -16,6 +17,6 @@ public class Join implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.collectors.add(new Collector(plugin, event.getPlayer().getUniqueId()));
+        plugin.collectors.put(event.getPlayer().getUniqueId(), new Collector(plugin, event.getPlayer().getUniqueId()));
     }
 }

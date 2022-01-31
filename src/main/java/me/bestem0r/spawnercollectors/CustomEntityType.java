@@ -4,6 +4,8 @@ import gcspawners.ASAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 
+import java.util.Locale;
+
 public class CustomEntityType {
 
     private boolean custom = false;
@@ -16,8 +18,8 @@ public class CustomEntityType {
     }
 
     public CustomEntityType(String type) {
-        if (isEntity(type)) {
-            this.entityType = EntityType.valueOf(type);
+        if (isEntity(type.toUpperCase(Locale.ROOT))) {
+            this.entityType = EntityType.valueOf(type.toUpperCase(Locale.ROOT));
         } else if (Bukkit.getPluginManager().isPluginEnabled("AdvancedSpawners")) {
             if (ASAPI.getCustomMobs().contains(type)) {
                 this.customType = type;

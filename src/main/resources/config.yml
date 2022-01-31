@@ -64,6 +64,8 @@ port: 3306
 database: spawnercollectors
 user: root
 password: password123
+#Delay before loading data (only for MySQL) (ticks)
+load_delay: 45
 
 
 #---------------- Spawner Settings ----------------#
@@ -99,6 +101,7 @@ messages:
   no_longer_afk: "&aYou are no longer AFK. Collectors working normally"
   withdraw_too_fast: "&cYou are withdrawing too fast!"
   inventory_full: "&cYour inventory is full!"
+  not_loaded: "&cPlease wait for your spawners to load!"
 
 sounds:
   spawners_open: BLOCK_CHEST_OPEN
