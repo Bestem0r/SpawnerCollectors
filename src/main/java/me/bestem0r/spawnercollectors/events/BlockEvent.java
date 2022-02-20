@@ -5,6 +5,7 @@ import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
@@ -48,7 +49,10 @@ public class BlockEvent implements Listener {
                 if (event.getBlock().getState() instanceof CreatureSpawner) {
                     EntityType type = ((CreatureSpawner) event.getBlock().getState()).getSpawnedType();
                     ItemStack spawner = SpawnerUtils.spawnerFromType(new CustomEntityType(type), 1);
-                    event.getBlock().getLocation().getWorld().dropItem(event.getBlock().getLocation(), spawner);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        event.getBlock().getLocation().getWorld().dropItem(event.getBlock().getLocation(), spawner);
+                    }, 2);
+                    event.setExpToDrop(0);
                 }
             }
         }

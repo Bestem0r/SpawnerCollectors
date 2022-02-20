@@ -1,17 +1,15 @@
 package me.bestem0r.spawnercollectors.commands.subcommands;
 
 import com.cryptomorin.xseries.XSound;
-import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.commands.CommandModule;
+import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.commands.SubCommand;
 import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -19,11 +17,12 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GiveSpawnerCommand implements SubCommand {
-    private CommandModule module;
+
     private final SCPlugin plugin;
 
     public GiveSpawnerCommand(SCPlugin plugin) {
@@ -38,8 +37,8 @@ public class GiveSpawnerCommand implements SubCommand {
                 return Arrays.asList("hand", "gui");
             case 2:
                 return Stream.of(EntityType.values()).filter((entityType) -> {
-                    return entityType.name().startsWith(args[2]);
-                }).map(Enum::toString).collect(Collectors.toList());
+                    return entityType.name().startsWith(args[2].toUpperCase(Locale.ROOT));
+                }).map(Enum::toString).map(String::toLowerCase).collect(Collectors.toList());
             default:
                 return new ArrayList<>();
         }
@@ -61,7 +60,7 @@ public class GiveSpawnerCommand implements SubCommand {
             return;
         }
         if (!this.isEntity(args[3])) {
-            sender.sendMessage(ChatColor.RED + "Could not find valid entity type: " + args[2]);
+            sender.sendMessage(ChatColor.RED + "Could not find valid entity type: " + args[3]);
             return;
         }
 
@@ -91,7 +90,7 @@ public class GiveSpawnerCommand implements SubCommand {
 
     private boolean isEntity(String entityTest) {
         for (EntityType entityType : EntityType.values()) {
-            if (entityType.name().equals(entityTest)) {
+            if (entityType.name().equals(entityTest.toUpperCase(Locale.ROOT))) {
                 return true;
             }
         }

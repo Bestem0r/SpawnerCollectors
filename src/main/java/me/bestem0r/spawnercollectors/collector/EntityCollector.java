@@ -53,9 +53,6 @@ public class EntityCollector {
 
             double worth = plugin.getLootManager().getPrices().get(entityType.name()) * spawned;
             if (worth > 0) {
-                //Bukkit.getLogger().info("Autosell spawned: " + spawned);
-
-                //Bukkit.getLogger().info( "- Worth: " + worth);
                 Economy economy = plugin.getEconomy();
                 economy.depositPlayer(player, worth);
                 plugin.addEarned(player, worth);
@@ -134,7 +131,7 @@ public class EntityCollector {
 
     /** Returns total worth (double) of the mobs collected */
     public double getTotalWorth() {
-        return Math.round(plugin.getLootManager().getPrices().get(entityType.name()) * entityAmount * 100.0) / 100.0;
+        return Math.round(plugin.getLootManager().getPrices().getOrDefault(entityType.name(), (double) 0) * entityAmount * 100.0) / 100.0;
     }
 
     public CustomEntityType getEntityType() {

@@ -4,13 +4,11 @@ import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XSound;
 import com.dnyferguson.mineablespawners.MineableSpawners;
 import de.dustplanet.util.SilkUtil;
-import gcspawners.ASAPI;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -36,34 +34,33 @@ public class SpawnerUtils {
     /** Returns spawner with set EntityType */
     public static ItemStack spawnerFromType(CustomEntityType type, int amount) {
 
+        ItemStack i;
+
         if (Bukkit.getPluginManager().isPluginEnabled("MineableSpawners")) {
-           ItemStack i = MineableSpawners.getApi().getSpawnerFromEntityType(type.getEntityType());
-           i.setAmount(amount);
-           return i;
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
-             return  SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.getEntityType().name(), "", amount, false);
-        }
-
-        ItemStack itemStack = new ItemStack(XMaterial.SPAWNER.parseMaterial(), amount);
-
-        //Lots of casting...
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        BlockStateMeta blockStateMeta = (BlockStateMeta) itemMeta;
-        BlockState blockState = blockStateMeta.getBlockState();
-        if (type.isCustom() && Bukkit.getPluginManager().isPluginEnabled("AdvacedSpawners")) {
-            //
+            i = MineableSpawners.getApi().getSpawnerFromEntityType(type.getEntityType());
+        } else if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
+            i = SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.getEntityType().name(), "", amount, false);
         } else {
+            i = new ItemStack(XMaterial.SPAWNER.parseMaterial(), amount);
+
+            //Lots of casting...
+            ItemMeta itemMeta = i.getItemMeta();
+            BlockStateMeta blockStateMeta = (BlockStateMeta) itemMeta;
+            BlockState blockState = blockStateMeta.getBlockState();
+
             CreatureSpawner spawner = (CreatureSpawner) blockState;
             spawner.setSpawnedType(type.getEntityType());
+
+            blockStateMeta.setBlockState(blockState);
+            i.setItemMeta(itemMeta);
         }
-        blockStateMeta.setBlockState(blockState);
+        ItemMeta meta = i.getItemMeta();
 
         String entityName = WordUtils.capitalizeFully(type.name().replaceAll("_", " "));
-        itemMeta.setDisplayName(ConfigManager.getString("spawner_withdraw_name").replace("%entity%", entityName));
+        meta.setDisplayName(ConfigManager.getString("spawner_withdraw_name").replace("%entity%", entityName));
 
-        itemStack.setItemMeta(itemMeta);
-        return itemStack;
+        i.setItemMeta(meta);
+        return i;
     }
 
     /** Plays sound for Player */

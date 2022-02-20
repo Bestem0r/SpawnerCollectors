@@ -7,17 +7,22 @@ import me.bestem0r.spawnercollectors.collector.EntityCollector;
 import me.bestem0r.spawnercollectors.loot.LootManager;
 import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class EntityMenu extends Menu {
 
@@ -133,17 +138,46 @@ public class EntityMenu extends Menu {
             }
             if (ConfigManager.getBoolean("give_xp") && (!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"))) {
 
+                int xp = 0;
                 if (ConfigManager.getBoolean(("custom_loot_tables.enable")) && lootManager.getCustomXP().containsKey(collected.getEntityType().name())) {
-                    player.giveExp((int) (lootManager.getCustomXP().get(collected.getEntityType().name()) * withdrawAmount));
-                    player.playSound(player.getLocation(), XSound.ENTITY_EXPERIENCE_ORB_PICKUP.parseSound(), 1.0F, 1.0F);
+                    xp = (int) (lootManager.getCustomXP().get(collected.getEntityType().name()) * withdrawAmount);
                 } else {
                     for (EntityExperience e : EntityExperience.values()) {
                         if (e.name().equals(collected.getEntityType().name())) {
-                            player.giveExp(e.getRandomAmount(withdrawAmount));
-                            player.playSound(player.getLocation(), XSound.ENTITY_EXPERIENCE_ORB_PICKUP.parseSound(), 1.0F, 1.0F);
+                            xp = e.getRandomAmount(withdrawAmount);
                             break;
                         }
                     }
+                }
+
+                if (ConfigManager.getBoolean("mending")) {
+                    List<ItemStack> mendable = new ArrayList<>();
+
+                    for (int i = 100; i < 104 && i < player.getInventory().getContents().length; i++) {
+                        ItemStack item = player.getInventory().getContents()[i];
+                        if (canBeRepaired(item)) {
+                            mendable.add(item);
+                        }
+                    }
+                    ItemStack hand = player.getItemInHand();
+                    if (canBeRepaired(hand)) {
+                        mendable.add(hand);
+                    }
+
+                    if (!mendable.isEmpty()) {
+                        for (int i = 0; i < withdrawAmount && xp >= 2; i++) {
+                            ItemStack item = mendable.get(ThreadLocalRandom.current().nextInt(0, mendable.size()));
+                            if (!repair(item)) {
+                                mendable.remove(item);
+                            }
+                            xp -= 2;
+                        }
+                    }
+                    player.updateInventory();
+                }
+                if (xp >= 0) {
+                    player.giveExp(xp);
+                    player.playSound(player.getLocation(), XSound.ENTITY_EXPERIENCE_ORB_PICKUP.parseSound(), 1.0F, 1.0F);
                 }
             }
 
@@ -151,5 +185,32 @@ public class EntityMenu extends Menu {
             player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
             update();
         }
+    }
+
+    private boolean canBeRepaired(ItemStack item) {
+        if (item == null) {
+            return false;
+        }
+        if (!(item.getItemMeta() instanceof Damageable)) {
+            return false;
+        }
+        if (!item.getItemMeta().hasEnchant(Enchantment.MENDING)) {
+            return false;
+        }
+
+        Damageable damageable = (Damageable) item.getItemMeta();
+        return damageable.getDamage() > 0;
+    }
+
+    private boolean repair(ItemStack item) {
+        if (item == null || !(item.getItemMeta() instanceof Damageable)) {
+            return false;
+        }
+        Damageable damageable = (Damageable) item.getItemMeta();
+
+        damageable.setDamage(Math.max(0, damageable.getDamage() - 2));
+        item.setItemMeta(damageable);
+
+        return damageable.getDamage() > 0;
     }
 }

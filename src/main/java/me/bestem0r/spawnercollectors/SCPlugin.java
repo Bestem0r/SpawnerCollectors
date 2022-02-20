@@ -1,6 +1,5 @@
 package me.bestem0r.spawnercollectors;
 
-import de.dustplanet.silkspawners.SilkSpawners;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.commands.CommandModule;
 import me.bestem0r.spawnercollectors.commands.subcommands.*;
@@ -27,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static me.bestem0r.spawnercollectors.DataStoreMethod.MYSQL;
 import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
@@ -107,7 +105,7 @@ public final class SCPlugin extends JavaPlugin {
             collectors.put(player.getUniqueId(), new Collector(this, player.getUniqueId()));
         }
 
-        Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.0-#7 of SpawnerCollectors! Please expect and report all bugs in my discord server");
+        //Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.1-#1 of SpawnerCollectors! Please expect and report all bugs in my discord server");
 
         if (getConfig().getLong("auto_save") > 0) {
             Bukkit.getScheduler().runTaskTimer(this, () -> {
@@ -181,10 +179,14 @@ public final class SCPlugin extends JavaPlugin {
     private void startSpawners() {
         long timer = 20L * getConfig().getInt("spawn_interval");
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-
-            for (Collector collector : collectors.values()) {
-                collector.attemptSpawn();
+            try {
+                for (Collector collector : collectors.values()) {
+                    collector.attemptSpawn();
+                }
+            } catch (ConcurrentModificationException e) {
+                Bukkit.getLogger().severe("[SpawnerCollectors] ConcurrentModificationException in spawner thread!");
             }
+
         }, timer, timer);
     }
     /** Async message thread for earned money by auto-sell */
