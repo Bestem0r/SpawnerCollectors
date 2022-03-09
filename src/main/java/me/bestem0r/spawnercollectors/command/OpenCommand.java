@@ -1,10 +1,9 @@
-package me.bestem0r.spawnercollectors.commands.subcommands;
+package me.bestem0r.spawnercollectors.command;
 
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.commands.CommandModule;
-import me.bestem0r.spawnercollectors.commands.SubCommand;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.command.ISubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -16,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class OpenCommand implements SubCommand {
+public class OpenCommand implements ISubCommand {
     private final SCPlugin plugin;
 
     public OpenCommand(SCPlugin plugin) {
@@ -68,5 +67,15 @@ public class OpenCommand implements SubCommand {
 
     public String getDescription() {
         return "Open others' spawner/mob storage";
+    }
+
+    @Override
+    public String getUsage() {
+        return "<player> <spawners/mobs>";
+    }
+
+    @Override
+    public boolean requirePermission() {
+        return true;
     }
 }

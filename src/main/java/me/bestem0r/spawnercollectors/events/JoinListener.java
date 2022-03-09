@@ -2,16 +2,15 @@ package me.bestem0r.spawnercollectors.events;
 
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-public class Join implements Listener {
+public class JoinListener implements Listener {
 
     private final SCPlugin plugin;
 
-    public Join(SCPlugin plugin) {
+    public JoinListener(SCPlugin plugin) {
         this.plugin = plugin;
     }
 

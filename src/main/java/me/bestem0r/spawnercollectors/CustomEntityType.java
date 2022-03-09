@@ -1,7 +1,5 @@
 package me.bestem0r.spawnercollectors;
 
-import gcspawners.ASAPI;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 
 import java.util.Locale;
@@ -20,13 +18,9 @@ public class CustomEntityType {
     public CustomEntityType(String type) {
         if (isEntity(type.toUpperCase(Locale.ROOT))) {
             this.entityType = EntityType.valueOf(type.toUpperCase(Locale.ROOT));
-        } else if (Bukkit.getPluginManager().isPluginEnabled("AdvancedSpawners")) {
-            if (ASAPI.getCustomMobs().contains(type)) {
-                this.customType = type;
-                this.custom = true;
-            }
         } else {
-            throw new IllegalArgumentException("No mob type: " + type);
+            this.customType = type.toUpperCase(Locale.ROOT);
+            this.custom = true;
         }
     }
 

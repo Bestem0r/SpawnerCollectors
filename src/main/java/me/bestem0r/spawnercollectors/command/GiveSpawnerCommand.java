@@ -1,12 +1,12 @@
-package me.bestem0r.spawnercollectors.commands.subcommands;
+package me.bestem0r.spawnercollectors.command;
 
 import com.cryptomorin.xseries.XSound;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
-import me.bestem0r.spawnercollectors.commands.SubCommand;
-import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.command.ISubCommand;
+import net.bestemor.core.config.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -21,7 +21,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class GiveSpawnerCommand implements SubCommand {
+public class GiveSpawnerCommand implements ISubCommand {
 
     private final SCPlugin plugin;
 
@@ -110,5 +110,15 @@ public class GiveSpawnerCommand implements SubCommand {
 
     public String getDescription() {
         return "Give spawners to players";
+    }
+
+    @Override
+    public String getUsage() {
+        return "<player> <hand/gui> <type> [amount]";
+    }
+
+    @Override
+    public boolean requirePermission() {
+        return true;
     }
 }

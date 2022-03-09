@@ -116,6 +116,13 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.Bestem0r</groupId>
+            <artifactId>BestemorCore</artifactId>
+            <version>0ced694c9d</version>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -141,6 +148,10 @@
                         <relocation>
                             <pattern>org.bstats</pattern>
                             <shadedPattern>me.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>net.bestemor.core</pattern>
+                            <shadedPattern>me.bestem0r.spawnercollectors.utils.core</shadedPattern>
                         </relocation>
                     </relocations>
                     <filters>

@@ -35,6 +35,10 @@
               <pattern>org.bstats</pattern>
               <shadedPattern>me.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
             </relocation>
+            <relocation>
+              <pattern>net.bestemor.core</pattern>
+              <shadedPattern>me.bestem0r.spawnercollectors.utils.core</shadedPattern>
+            </relocation>
           </relocations>
           <filters>
             <filter>

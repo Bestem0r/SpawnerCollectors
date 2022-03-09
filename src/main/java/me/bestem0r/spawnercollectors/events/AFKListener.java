@@ -1,7 +1,7 @@
 package me.bestem0r.spawnercollectors.events;
 
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utils.ConfigManager;
+import net.bestemor.core.config.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,7 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.time.Instant;
 import java.util.*;
 
-public class AFKChecker implements Listener {
+public class AFKListener implements Listener {
 
     private final SCPlugin plugin;
 
@@ -22,7 +22,7 @@ public class AFKChecker implements Listener {
     private final Map<UUID, Instant> lastMove = new HashMap<>();
     private final List<UUID> afkPlayers = new ArrayList<>();
 
-    public AFKChecker(SCPlugin plugin) {
+    public AFKListener(SCPlugin plugin) {
         this.plugin = plugin;
 
         this.afkCheck = plugin.getConfig().getBoolean("afk.enable");

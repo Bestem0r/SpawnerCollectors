@@ -3,8 +3,8 @@ package me.bestem0r.spawnercollectors.events;
 import com.cryptomorin.xseries.XMaterial;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.config.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.CreatureSpawner;
@@ -17,12 +17,12 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class BlockEvent implements Listener {
+public class BlockListener implements Listener {
 
     private final SCPlugin plugin;
     private final XMaterial spawner = XMaterial.SPAWNER;
 
-    public BlockEvent(SCPlugin plugin) {
+    public BlockListener(SCPlugin plugin) {
         this.plugin = plugin;
     }
 

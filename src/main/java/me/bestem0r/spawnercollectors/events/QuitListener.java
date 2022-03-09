@@ -6,11 +6,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class Quit implements Listener {
+public class QuitListener implements Listener {
 
     private final SCPlugin plugin;
 
-    public Quit(SCPlugin plugin) {
+    public QuitListener(SCPlugin plugin) {
         this.plugin = plugin;
     }
 

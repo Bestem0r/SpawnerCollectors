@@ -4,7 +4,8 @@ import com.cryptomorin.xseries.XMaterial;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utils.ConfigManager;
+import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.config.ConfigManager;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
@@ -25,18 +26,11 @@ public class EntityCollector {
     private final List<CollectedSpawner> spawners = new ArrayList<>();
     private long entityAmount;
 
-    private final List<String> spawnerLore;
-    private final List<String> entityLore;
-
     private final SCPlugin plugin;
 
     public EntityCollector(SCPlugin plugin, CustomEntityType entityType, long entityAmount, int spawnerAmount) {
         this.entityType = entityType;
         this.plugin = plugin;
-
-        FileConfiguration mainConfig = plugin.getConfig();
-        this.spawnerLore = mainConfig.getStringList("menus.spawners.item_lore");
-        this.entityLore = mainConfig.getStringList("menus.mobs.item_lore");
 
         this.entityAmount = entityAmount;
         for (int i = 0; i  < spawnerAmount; i++) {
@@ -58,8 +52,11 @@ public class EntityCollector {
                 plugin.addEarned(player, worth);
             }
         } else {
-            int max = plugin.getConfig().getInt("max_mobs");
-            if (max != 0 && (entityAmount + spawned) > max) {
+            int maxConfig = plugin.getConfig().getInt("max_mobs");
+            int maxPermission = SpawnerUtils.getMaxMobs(player, entityType);
+
+            int max = (maxPermission < 0 ? maxConfig : Math.max(maxPermission, maxConfig));
+            if (max > 0 && (entityAmount + spawned) > max) {
                 entityAmount = max;
             } else {
                 entityAmount += spawned;
@@ -132,6 +129,10 @@ public class EntityCollector {
     /** Returns total worth (double) of the mobs collected */
     public double getTotalWorth() {
         return Math.round(plugin.getLootManager().getPrices().getOrDefault(entityType.name(), (double) 0) * entityAmount * 100.0) / 100.0;
+    }
+
+    public void clear() {
+        entityAmount = 0;
     }
 
     public CustomEntityType getEntityType() {

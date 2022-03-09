@@ -1,15 +1,14 @@
-package me.bestem0r.spawnercollectors.commands.subcommands;
+package me.bestem0r.spawnercollectors.command;
 
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.commands.CommandModule;
-import me.bestem0r.spawnercollectors.commands.SubCommand;
-import me.bestem0r.spawnercollectors.utils.ConfigManager;
+import net.bestemor.core.command.ISubCommand;
+import net.bestemor.core.config.ConfigManager;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReloadCommand implements SubCommand {
+public class ReloadCommand implements ISubCommand {
 
     private final SCPlugin plugin;
 
@@ -32,5 +31,15 @@ public class ReloadCommand implements SubCommand {
     @Override
     public String getDescription() {
         return "Reload SpawnerCollectors";
+    }
+
+    @Override
+    public String getUsage() {
+        return "";
+    }
+
+    @Override
+    public boolean requirePermission() {
+        return true;
     }
 }

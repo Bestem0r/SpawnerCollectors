@@ -1,17 +1,17 @@
 package me.bestem0r.spawnercollectors;
 
 import me.bestem0r.spawnercollectors.collector.Collector;
-import me.bestem0r.spawnercollectors.commands.CommandModule;
-import me.bestem0r.spawnercollectors.commands.subcommands.*;
+import me.bestem0r.spawnercollectors.command.*;
 import me.bestem0r.spawnercollectors.database.SQLManager;
-import me.bestem0r.spawnercollectors.events.AFKChecker;
-import me.bestem0r.spawnercollectors.events.BlockEvent;
-import me.bestem0r.spawnercollectors.events.Join;
-import me.bestem0r.spawnercollectors.events.Quit;
+import me.bestem0r.spawnercollectors.events.AFKListener;
+import me.bestem0r.spawnercollectors.events.BlockListener;
+import me.bestem0r.spawnercollectors.events.JoinListener;
+import me.bestem0r.spawnercollectors.events.QuitListener;
 import me.bestem0r.spawnercollectors.loot.LootManager;
-import me.bestem0r.spawnercollectors.menus.MenuListener;
-import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.command.CommandModule;
+import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.menu.MenuListener;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -46,7 +46,7 @@ public final class SCPlugin extends JavaPlugin {
     private boolean morePermissions;
     private boolean disablePlace;
 
-    private AFKChecker afkChecker;
+    private AFKListener afkListener;
 
     private int maxSpawners;
 
@@ -70,13 +70,13 @@ public final class SCPlugin extends JavaPlugin {
         ConfigManager.setConfig(getConfig());
         ConfigManager.setPrefixPath("prefix");
 
-        Bukkit.getPluginManager().registerEvents(new Join(this), this);
-        Bukkit.getPluginManager().registerEvents(new Quit(this), this);
-        Bukkit.getPluginManager().registerEvents(new BlockEvent(this), this);
-        this.afkChecker = new AFKChecker(this);
+        Bukkit.getPluginManager().registerEvents(new JoinListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new QuitListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
+        this.afkListener = new AFKListener(this);
         this.menuListener = new MenuListener(this);
         Bukkit.getPluginManager().registerEvents(menuListener, this);
-        Bukkit.getPluginManager().registerEvents(afkChecker, this);
+        Bukkit.getPluginManager().registerEvents(afkListener, this);
 
         this.lootManager = new LootManager(this);
         setupEconomy();
@@ -98,7 +98,9 @@ public final class SCPlugin extends JavaPlugin {
                 .addSubCommand("givespawner", new GiveSpawnerCommand(this))
                 .addSubCommand("open", new OpenCommand(this))
                 .addSubCommand("migrate", new MigrateCommand(this))
+                .permissionPrefix("spawnercollectors")
                 .build();
+
         commandModule.register("sc");
 
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -257,8 +259,8 @@ public final class SCPlugin extends JavaPlugin {
     public int getSpawnTimeMax() {
         return spawnTimeMax;
     }
-    public AFKChecker getAfkChecker() {
-        return afkChecker;
+    public AFKListener getAfkChecker() {
+        return afkListener;
     }
     public SQLManager getSqlManager() {
         return sqlManager;

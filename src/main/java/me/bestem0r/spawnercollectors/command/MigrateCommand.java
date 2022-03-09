@@ -1,10 +1,9 @@
-package me.bestem0r.spawnercollectors.commands.subcommands;
+package me.bestem0r.spawnercollectors.command;
 
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.DataStoreMethod;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.commands.CommandModule;
-import me.bestem0r.spawnercollectors.commands.SubCommand;
+import net.bestemor.core.command.ISubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -12,7 +11,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MigrateCommand implements SubCommand {
+public class MigrateCommand implements ISubCommand {
 
     private final SCPlugin plugin;
 
@@ -45,6 +44,16 @@ public class MigrateCommand implements SubCommand {
 
     @Override
     public String getDescription() {
-        return "Migrate between storage methods";
+        return "Migrate from YAML to MySQL";
+    }
+
+    @Override
+    public String getUsage() {
+        return "";
+    }
+
+    @Override
+    public boolean requirePermission() {
+        return true;
     }
 }

@@ -4,10 +4,10 @@ import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.DataStoreMethod;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.menus.EntityMenu;
-import me.bestem0r.spawnercollectors.menus.Menu;
 import me.bestem0r.spawnercollectors.menus.SpawnerMenu;
-import me.bestem0r.spawnercollectors.utils.ConfigManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.menu.Menu;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
@@ -16,6 +16,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,16 +106,17 @@ public class Collector {
         int max = 0;
         if (player != null) {
             max = this.owner.getEffectivePermissions().stream()
-                    .filter((s) -> s.getPermission().startsWith("spawnercollectors.spawner." + type.name().toLowerCase()))
-                    .filter((s) -> s.getPermission().length() > 26 + type.name().length() + 1)
-                    .map((s) -> s.getPermission().substring(26 + type.name().length() + 1))
+                    .map(PermissionAttachmentInfo::getPermission)
+                    .filter((s) -> s.startsWith("spawnercollectors.spawner." + type.name().toLowerCase() + "."))
+                    .filter((s) -> s.length() > 26 + type.name().length() + 1)
+                    .map((s) -> s.substring(26 + type.name().length() + 1))
                     .mapToInt(Integer::parseInt)
                     .max()
                     .orElse(0);
         }
 
         //Check if amount is exceeding per-mob permission limit
-        if (player != null && this.plugin.isMorePermissions() && !owner.isOp() && max != 0 && max < amount) {
+        if (player != null && this.plugin.isMorePermissions() && !owner.hasPermission("spawnercollectors.bypass_limit") && max != 0 && max < amount) {
             player.sendMessage(ConfigManager.getMessage("messages.reached_max_spawners").replace("%max%", String.valueOf(max)));
             return false;
         }
@@ -168,11 +170,8 @@ public class Collector {
         }
 
         Economy economy = plugin.getEconomy();
-        double total = 0;
-        for (EntityCollector collected : collectorEntities) {
-            total += collected.getTotalWorth();
-            collected.removeEntities(collected.getEntityAmount());
-        }
+        double total = getTotalWorth();
+        collectorEntities.forEach(EntityCollector::clear);
         economy.depositPlayer(player, total);
 
         if (total > 0) {
@@ -346,6 +345,14 @@ public class Collector {
         if (entityMenu != null) {
             this.entityMenu.update();
         }
+    }
+
+    public double getTotalWorth() {
+        double total = 0;
+        for (EntityCollector collected : collectorEntities) {
+            total += collected.getTotalWorth();
+        }
+        return total;
     }
 
     public UUID getUuid() {

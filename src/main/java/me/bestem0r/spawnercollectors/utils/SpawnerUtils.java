@@ -7,8 +7,10 @@ import de.dustplanet.util.SilkUtil;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
+import net.bestemor.core.config.ConfigManager;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -18,7 +20,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,7 +43,7 @@ public class SpawnerUtils {
         if (Bukkit.getPluginManager().isPluginEnabled("MineableSpawners")) {
             i = MineableSpawners.getApi().getSpawnerFromEntityType(type.getEntityType());
         } else if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
-            i = SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.getEntityType().name(), "", amount, false);
+            i = SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.name(), "", amount, false);
         } else {
             i = new ItemStack(XMaterial.SPAWNER.parseMaterial(), amount);
 
@@ -119,5 +123,19 @@ public class SpawnerUtils {
             }
         }
         return false;
+    }
+
+    public static int getMaxMobs(OfflinePlayer player, CustomEntityType type) {
+        if (!player.isOnline()) {
+            return -1;
+        }
+        return player.getPlayer().getEffectivePermissions().stream()
+                .map(PermissionAttachmentInfo::getPermission)
+                .filter((s) -> s.startsWith("spawnercollectors.mob." + type.name().toLowerCase() + "."))
+                .filter((s) -> s.length() > 22 + type.name().length() + 1)
+                .map((s) -> s.substring(22 + type.name().length() + 1))
+                .mapToInt(Integer::parseInt)
+                .max()
+                .orElse(-1);
     }
 }
