@@ -11,8 +11,10 @@ import me.bestem0r.spawnercollectors.loot.LootManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.command.CommandModule;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import net.bestemor.core.menu.MenuListener;
 import net.milkbowl.vault.economy.Economy;
+import org.apache.commons.io.FileUtils;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -24,6 +26,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -63,10 +66,23 @@ public final class SCPlugin extends JavaPlugin {
     public void onEnable() {
         Metrics metricsLite = new Metrics(this, 9427);
 
-        getConfig().options().copyDefaults();
-        saveDefaultConfig();
-        reloadConfig();
+        if (!new File(getDataFolder() + "/config.yml").exists()) {
+            if (VersionUtils.getMCVersion() < 13) {
 
+                String fileName = VersionUtils.getMCVersion() == 8 ? "config_1_8.yml" : "config_legacy.yml";
+                InputStream stream = getResource(fileName);
+
+                File target = new File(getDataFolder() + "/config.yml");
+                try {
+                    FileUtils.copyInputStreamToFile(Objects.requireNonNull(stream), target);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                saveDefaultConfig();
+            }
+        }
+        getConfig().options().copyDefaults();
         ConfigManager.setConfig(getConfig());
         ConfigManager.setPrefixPath("prefix");
 
@@ -98,7 +114,7 @@ public final class SCPlugin extends JavaPlugin {
                 .addSubCommand("givespawner", new GiveSpawnerCommand(this))
                 .addSubCommand("open", new OpenCommand(this))
                 .addSubCommand("migrate", new MigrateCommand(this))
-                .permissionPrefix("spawnercollectors")
+                .permissionPrefix("spawnercollectors.command")
                 .build();
 
         commandModule.register("sc");
@@ -202,7 +218,6 @@ public final class SCPlugin extends JavaPlugin {
                         Player player = offlinePlayer.getPlayer();
                         if (player == null) { continue; }
 
-                        //Bukkit.getLogger().info("Sending message: " + earned.get(offlinePlayer));
                         double playerEarned = Math.round(earned.get(offlinePlayer) * 100.0) / 100.0;
                         player.sendMessage(ConfigManager.getCurrencyBuilder("messages.earned_notify")
                                 .replaceCurrency("%worth%", BigDecimal.valueOf(playerEarned))
@@ -297,11 +312,8 @@ public final class SCPlugin extends JavaPlugin {
     /** Earned message methods */
     public void addEarned(OfflinePlayer player, double amount) {
         if (earned.containsKey(player)) {
-            //Bukkit.getLogger().info("Previous amount: " + earned.get(player));
             earned.replace(player, earned.get(player) + amount);
-            //Bukkit.getLogger().info("New amount: " + earned.get(player));
         } else {
-            //Bukkit.getLogger().info("No previous amount!");
             earned.put(player, amount);
         }
     }

@@ -1,5 +1,6 @@
 name: SpawnerCollectors
-version: 1.7.1
+version: 1.7.3
+description: Store mob spawners in a "cloud gui" instead of creating laggy spawner farms
 api-version: 1.13
 main: me.bestem0r.spawnercollectors.SCPlugin
 softdepend: [HeadDatabase, Essentials, CMI, AdvancedSpawners, MineableSpawners, SilkSpawners]

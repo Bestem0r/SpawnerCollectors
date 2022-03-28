@@ -1,23 +1,23 @@
 package me.bestem0r.spawnercollectors.menus;
 
-import com.cryptomorin.xseries.XSound;
 import me.bestem0r.spawnercollectors.EntityExperience;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.collector.EntityCollector;
 import me.bestem0r.spawnercollectors.loot.LootManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
 import net.bestemor.core.menu.MenuContent;
 import net.bestemor.core.menu.MenuListener;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -62,8 +62,6 @@ public class EntityMenu extends Menu {
                 EntityCollector collected = collector.getCollectorEntities().get(slot);
                 content.setClickable(slot, new Clickable(collected.getEntityItem(), (event) -> {
 
-                    Bukkit.getLogger().info("[SpawnerCollectors] Entity Menu interact");
-
                     Player player = (Player) event.getWhoClicked();
                     if (event.getClick() == ClickType.LEFT) {
                         collector.sell(player, collected);
@@ -84,7 +82,6 @@ public class EntityMenu extends Menu {
                             player.sendMessage(ConfigManager.getMessage("messages.withdraw_too_fast"));
                             return;
                         }
-                        //Bukkit.getLogger().info("Cancel? " + plugin.getConfig().getBoolean("cancel_overflowing_items"));
                         if (!SpawnerUtils.hasAvailableSlot(player) && ConfigManager.getBoolean("cancel_overflowing_items")) {
                             player.sendMessage(ConfigManager.getMessage("messages.inventory_full"));
                             return;
@@ -117,7 +114,7 @@ public class EntityMenu extends Menu {
                                 }
                             }
 
-                            if (ConfigManager.getBoolean("mending")) {
+                            if (ConfigManager.getBoolean("mending") && VersionUtils.getMCVersion() > 8) {
                                 List<ItemStack> mendable = new ArrayList<>();
 
                                 for (int i = 100; i < 104 && i < player.getInventory().getContents().length; i++) {
@@ -133,6 +130,9 @@ public class EntityMenu extends Menu {
 
                                 if (!mendable.isEmpty()) {
                                     for (int i = 0; i < withdrawAmount && xp >= 2; i++) {
+                                        if (mendable.size() == 0) {
+                                            break;
+                                        }
                                         ItemStack item = mendable.get(ThreadLocalRandom.current().nextInt(0, mendable.size()));
                                         if (!repair(item)) {
                                             mendable.remove(item);
@@ -144,7 +144,8 @@ public class EntityMenu extends Menu {
                             }
                             if (xp >= 0) {
                                 player.giveExp(xp);
-                                player.playSound(player.getLocation(), XSound.ENTITY_EXPERIENCE_ORB_PICKUP.parseSound(), 1.0F, 1.0F);
+                                Sound s = Sound.valueOf(VersionUtils.getMCVersion() > 8 ? "ENTITY_EXPERIENCE_ORB_PICKUP" : "ORB_PICKUP");
+                                player.playSound(player.getLocation(), s, 1.0F, 1.0F);
                             }
                         }
 
@@ -174,29 +175,22 @@ public class EntityMenu extends Menu {
     }
 
     private boolean canBeRepaired(ItemStack item) {
-        if (item == null) {
+        if (item == null || item.getItemMeta() == null || VersionUtils.getMCVersion() < 9) {
             return false;
         }
-        if (!(item.getItemMeta() instanceof Damageable)) {
-            return false;
-        }
-        if (!item.getItemMeta().hasEnchant(Enchantment.MENDING)) {
+        if (!item.getItemMeta().hasEnchants() || !item.getItemMeta().hasEnchant(Enchantment.MENDING)) {
             return false;
         }
 
-        Damageable damageable = (Damageable) item.getItemMeta();
-        return damageable.getDamage() > 0;
+        return item.getDurability() > 0;
     }
 
     private boolean repair(ItemStack item) {
-        if (item == null || !(item.getItemMeta() instanceof Damageable)) {
+        if (item == null || item.getItemMeta() == null) {
             return false;
         }
-        Damageable damageable = (Damageable) item.getItemMeta();
 
-        damageable.setDamage(Math.max(0, damageable.getDamage() - 2));
-        item.setItemMeta(damageable);
-
-        return damageable.getDamage() > 0;
+        item.setDurability((short) Math.max(0, item.getDurability() - 2));
+        return item.getDurability() > 0;
     }
 }

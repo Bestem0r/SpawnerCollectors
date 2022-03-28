@@ -7,7 +7,7 @@
 
     <groupId>me.bestem0r.spawnercollectors</groupId>
     <artifactId>SpawnerCollectors</artifactId>
-    <version>1.7.1-SNAPSHOT</version>
+    <version>1.7.3-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.17.1-R0.1-SNAPSHOT</version>
+            <version>1.9.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -58,14 +58,6 @@
             <artifactId>HeadDatabase-API</artifactId>
             <version>1.0.0</version>
             <scope>provided</scope>
-        </dependency>
-
-        <!-- XSeries -->
-        <dependency>
-            <groupId>com.github.cryptomorin</groupId>
-            <artifactId>XSeries</artifactId>
-            <version>8.5.0.1</version>
-            <scope>compile</scope>
         </dependency>
 
         <!-- bStats -->
@@ -94,7 +86,7 @@
             <systemPath>${project.basedir}/resources/MineableSpawners-3.1.2.jar</systemPath>
         </dependency>
 
-        <!-- MineableSpawners -->
+        <!-- SilkSpawners -->
         <dependency>
             <groupId>de.dustplanet.silkspawners</groupId>
             <artifactId>SilkSpawners</artifactId>
@@ -119,8 +111,15 @@
         <dependency>
             <groupId>com.github.Bestem0r</groupId>
             <artifactId>BestemorCore</artifactId>
-            <version>0ced694c9d</version>
+            <version>9fcbba6cb2</version>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
@@ -142,10 +141,6 @@
                             <shadedPattern>me.bestem0r.spawnercollectors.database.slf4j</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>com.cryptomorin</pattern>
-                            <shadedPattern>me.bestem0r.spawnercollectors.utils.xmaterial</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>org.bstats</pattern>
                             <shadedPattern>me.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
                         </relocation>
@@ -154,22 +149,6 @@
                             <shadedPattern>me.bestem0r.spawnercollectors.utils.core</shadedPattern>
                         </relocation>
                     </relocations>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>com/cryptomorin/xseries/XItemStack*</exclude>
-                                <exclude>com/cryptomorin/xseries/XBlock*</exclude>
-                                <exclude>com/cryptomorin/xseries/XEntity*</exclude>
-                                <exclude>com/cryptomorin/xseries/XPotion*</exclude>
-                                <exclude>com/cryptomorin/xseries/XEnchantment*</exclude>
-                                <exclude>com/cryptomorin/xseries/XBiome*</exclude>
-                                <exclude>com/cryptomorin/xseries/NoteBlockMusic*</exclude>
-                                <exclude>com/cryptomorin/xseries/particles/*</exclude>
-                                <exclude>com/cryptomorin/xseries/messages/*</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
                 </configuration>
                 <executions>
                     <execution>

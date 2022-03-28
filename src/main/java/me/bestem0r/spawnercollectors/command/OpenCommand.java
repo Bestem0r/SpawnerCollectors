@@ -22,11 +22,11 @@ public class OpenCommand implements ISubCommand {
         this.plugin = plugin;
     }
 
-    public List<String> getCompletion(int index, String[] args) {
-        switch(index) {
-            case 0:
+    public List<String> getCompletion(String[] args) {
+        switch(args.length) {
+            case 2:
                 return Bukkit.getOnlinePlayers().stream().map(OfflinePlayer::getName).collect(Collectors.toList());
-            case 1:
+            case 3:
                 return Arrays.asList("mobs", "spawners");
             default:
                 return new ArrayList<>();

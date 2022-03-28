@@ -1,17 +1,17 @@
 package me.bestem0r.spawnercollectors.collector;
 
-import com.cryptomorin.xseries.XMaterial;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -84,7 +84,7 @@ public class EntityCollector {
 
     /** Returns ItemStack to display number of spawners */
     public ItemStack getSpawnerItem() {
-        ItemStack item = XMaterial.SPAWNER.parseItem();
+        ItemStack item = new ItemStack(Material.valueOf(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER"));
 
         ItemMeta itemMeta = item.getItemMeta();
         itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
@@ -103,8 +103,12 @@ public class EntityCollector {
             if (plugin.isUsingHeadDB() && material.startsWith("hdb:")) {
                 item = new HeadDatabaseAPI().getItemHead(material.substring(4));
             } else {
-                XMaterial xMaterial = XMaterial.matchXMaterial(material).orElse(XMaterial.STONE);
-                item = xMaterial.parseItem();
+                if (material.contains(":")) {
+                    String[] split = material.split(":");
+                    item = new ItemStack(Material.valueOf(split[0]), Short.parseShort(split[1]));
+                } else {
+                    item = new ItemStack(Material.valueOf(material));
+                }
             }
 
             ItemMeta itemMeta = item.getItemMeta();

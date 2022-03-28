@@ -1,12 +1,12 @@
 package me.bestem0r.spawnercollectors.menus;
 
-import com.cryptomorin.xseries.XMaterial;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.collector.EntityCollector;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
 import net.bestemor.core.menu.MenuContent;
@@ -108,7 +108,6 @@ public class SpawnerMenu extends Menu {
     public void onClick(InventoryClickEvent event) {
         int slot = event.getRawSlot();
 
-        Bukkit.getLogger().info("[SpawnerCollectors] Running onClick in SpawnerMenu");
         event.setCancelled(true);
 
         Player player = (Player) event.getWhoClicked();
@@ -116,7 +115,7 @@ public class SpawnerMenu extends Menu {
 
         //Add spawner
         if (slot >= event.getView().getTopInventory().getSize() && currentItem != null) {
-            if (currentItem.getType() == XMaterial.SPAWNER.parseMaterial()) {
+            if (currentItem.getType().name().equals(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER")) {
                 CustomEntityType type = SpawnerUtils.typeFromSpawner(currentItem);
                 if (type != null && collector.addSpawner(player, type, currentItem.getAmount())) {
                     player.getInventory().setItem(event.getSlot(), null);

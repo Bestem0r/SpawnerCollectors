@@ -1,0 +1,266 @@
+#------------------- General Settings -------------------#
+
+#Plugin messages prefix
+prefix: "&8[&eSpawners&8]"
+#How often should the plugin check if new virtual mobs should spawn? (Seconds)
+spawn_interval: 1
+#How often should the players receive a "earned by auto-sell notification"? (Minutes)
+#Set to 0 to disable
+notify_interval: 1
+#Currency symbol
+currency: '$'
+#Should the currency symbol be placed before the price?
+currency_before: false
+#Drop spawner item when spawner is broken with silktouch
+enable_silktouch: true
+#Item name for withdrawn spawners (Placeholder: %entity%)
+spawner_withdraw_name: "&r%entity% Spawner"
+#Maximum allowed spawner amount per entity type (0 for unlimited)
+#Can be bypassed with 'spawnercollectors.bypass_limit'
+max_spawners: 0
+#Should an action log be saved on plugin/server reload?
+log: true
+#Auto-save interval (seconds)
+auto_save: 30
+#Require permissions for sell, withdraw, auto-sell
+#These permissions are:
+# - spawnercollectors.sell,
+# - spawnercollectors.auto_sell,
+# - spawnercollectors.withdraw.mob
+# - spawnercollectors.withdraw.spawner
+#Enabling this also requires permissions to add each mob
+#E.g. adding zombie spawners requires:
+# - spawnercollectors.spawner.zombie
+#You can also set max amount per mob, e.g:
+# - spawnercollectors.spawner.zombie.10
+more_permissions: false
+#Should experience (XP) be given when mobs are withdrawn?
+#This also requires the player to have permission node:
+#spawnercollectors.receive_xp
+give_xp: true
+#If give_xp is enabled, withdrawn mobs will also mend tools and armor
+mending: true
+#This will disable placing spawners on the ground. Can be
+#bypassed with 'spawnercollectors.bypass_place'
+disable_spawner_placing: false
+#Cancel overflowing items instead of dropping them on the ground
+cancel_overflowing_items: false
+#Maximum amount of mobs of a certain type the collector
+#should be able to hold. Use 0 to disable
+max_mobs: 1000
+#Cooldown in milliseconds between mob withdrawals
+withdraw_cooldown: 500
+#Enable this to turn off collectors for AFK players
+afk:
+  enable: true
+  time: 300 #Seconds
+
+
+#---------------- Data Storage Settings ----------------#
+
+#Can be YAML or MYSQL
+data_storage_method: YAML
+#Following attributes apply if you're using MySQL only
+address: localhost
+port: 3306
+database: spawnercollectors
+user: root
+password: password123
+#Delay before loading data (only for MySQL) (ticks)
+load_delay: 45
+
+
+#---------------- Spawner Settings ----------------#
+
+#(Default config replicates vanilla behaviour)
+spawner:
+  #How many mobs are spawned for every spawn
+  spawns: 4
+  min_time: 10 #Second
+  max_time: 40 #Second
+
+
+
+#----------------- Messages and sounds -----------------#
+
+messages:
+  earned_notify: "&7Earned &a%worth% &7the past &e%time% minutes &7from auto selling spawners!" #Placeholders: %worth%, %time%
+  sell: "&7Sold mobs for &a%worth%&7!" #Placeholders: %worth%
+  sell_all: "&7Sold everything for a total of &a%worth%&7!"
+  not_supported: "&cThis entity type is not supported! Please contact an administrator to add it!"
+  plugin_reloaded: "&aPlugin reloaded!"
+  give_spawner: "&aSpawners successfully given!"
+  reached_max_spawners: "&cYou have reached the max limit of %max% for this mob type! Please try again with a lower amount!"
+  invalid_command_usage: "&cInvalid usage! Use /sc help"
+  no_permission_command: "&cYou do not have permission for this action!"
+  no_permission_mob: "&cYou do not have permission to add this mob!"
+  no_permission_sell: "&cYou do not have permission to sell mobs!"
+  no_permission_withdraw_spawner: "&cYou do not have permission to withdraw spawners!"
+  no_permission_withdraw_mob: "&cYou do not have permission to withdraw mobs!"
+  no_permission_auto-sell: "&cYou do not have permission to auto-sell!"
+  no_permission_place_spawner: "&cYou do not have permissions to place spawners!"
+  afk: "&cYou are now AFK. Collectors are turned off!"
+  no_longer_afk: "&aYou are no longer AFK. Collectors working normally"
+  withdraw_too_fast: "&cYou are withdrawing too fast!"
+  inventory_full: "&cYour inventory is full!"
+  not_loaded: "&cPlease wait for your spawners to load!"
+
+sounds:
+  spawners_open: CHEST_OPEN
+  mobs_open: CHEST_OPEN
+  sell: ORB_PICKUP
+  add_spawner: ITEM_PICKUP
+  withdraw: ITEM_PICKUP
+  toggle_auto_sell: CLICK
+  notification: ORB_PICKUP
+
+#-------------------- Menu settings --------------------#
+menus:
+  #Add/withdraw spawners menu
+  spawners:
+    #GUI title
+    title: "&8Add / withdraw spawners"
+    item_lore: #Placeholders: %amount%
+      - "&7Amount: &c%amount%"
+      - ""
+      - "&7>> Left click to &awithdraw"
+
+  #Sell/withdraw mobs menu
+  mobs:
+    #GUI title
+    title: "&8Collected mobs"
+    item_lore: #Placeholders: %amount%
+      - "&7Amount: &c%amount%"
+      - "&7Worth: &a%worth%"
+      - ""
+      - "&7>> Left click to &aSell"
+      - "&7>> Right click to &eWithdraw"
+
+  #Items used in menus
+  items:
+    auto_sell_slot: 50
+    auto_sell_true:
+      material: STAINED_CLAY:5
+      name: "&aAuto-sell enabled"
+      lore:
+        - "&7>> Click to &cdisable"
+        - "&7auto-sell for mobs collected!"
+    auto_sell_false:
+      material: STAINED_CLAY:14
+      name: "&cAuto-sell disabled"
+      lore:
+        - "&7>> Click to &aenable"
+        - "&7auto-sell for mobs collected!"
+    filler:
+      material: STAINED_GLASS_PANE:7
+      name: ""
+      lore:
+        - ""
+    mobs:
+      slot: 48
+      material: SKULL_ITEM
+      name: "&eSwitch to mobs"
+      lore:
+        - "&7>> Click to switch"
+        - "&7to mob view!"
+    spawners:
+      slot: 48
+      material: MOB_SPAWNER
+      name: "&eSwitch to spawners"
+      lore:
+        - "&7>> Click to switch"
+        - "&7to spawners view!"
+    sell_all:
+      slot: 49
+      material: GOLD_INGOT
+      name: "&aSell all"
+      lore:
+        - "&7Total worth: &a%worth%"
+        - ""
+        - "&7>> Click to &asell &7all"
+        - "&7collected mobs!"
+
+
+#--------------------- Mob prices ---------------------#
+
+#Per mob worth. Remember to also set a material for each mob!
+prices:
+  SKELETON: 50
+  ZOMBIE: 10
+  COW: 5
+  PIG: 5
+
+#--------------------- Mob materials ---------------------#
+
+#Enable HeadDatabase hook
+use_headdb: false
+#If you want to use HeadDatabase IDs instead of vanilla
+#materials, enable HeadDB above and place 'hdb:' in front
+#of the id! E.g. hdb:10000
+materials:
+  ZOMBIE: ROTTEN_FLESH #4187 recommended for HeadDB
+  SKELETON: BONE #22402 recommended for HeadDB
+  COW: RAW_BEEF #335 recommended for HeadDB
+  PIG: PORK #337 recommended for HeadDB
+
+
+#------------------- Custom loot tables -------------------#
+
+custom_loot_tables:
+  #If you want to use custom loot tables, set this to true
+  enable: false
+  #List all mobs which should use custom loot tables. If a
+  #mob is not listed, it will default to it's vanilla table
+  mobs:
+    #EntityType of mob
+    SKELETON:
+      #Material
+      BONE:
+        #Probability of receiving this item
+        probability: 1
+        #Minimum amount
+        min: 0
+        #Maximum amount
+        max: 2
+      ARROW:
+        probability: 1
+        min: 0
+        max: 2
+    ZOMBIE:
+      ROTTEN_FLESH:
+        probability: 1
+        min: 0
+        max: 2
+      POTATO_ITEM:
+        probability: 0.025
+        min: 1
+        max: 1
+      IRON_INGOT:
+        probability: 0.025
+        min: 1
+        max: 1
+      CARROT_ITEM:
+        probability: 0.025
+        min: 1
+        max: 1
+    COW:
+      LEATHER:
+        probability: 1
+        min: 0
+        max: 2
+      RAW_BEEF:
+        probability: 1
+        min: 1
+        max: 3
+    PIG:
+      PORK:
+        probability: 1
+        min: 1
+        max: 3
+
+#Enabled if custom_loot_tables is enabled
+custom_xp:
+  mobs:
+    SKELETON: 10
+
+

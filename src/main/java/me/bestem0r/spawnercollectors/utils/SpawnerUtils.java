@@ -1,15 +1,15 @@
 package me.bestem0r.spawnercollectors.utils;
 
-import com.cryptomorin.xseries.XMaterial;
-import com.cryptomorin.xseries.XSound;
 import com.dnyferguson.mineablespawners.MineableSpawners;
 import de.dustplanet.util.SilkUtil;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
@@ -22,7 +22,6 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
-import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +44,7 @@ public class SpawnerUtils {
         } else if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
             i = SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.name(), "", amount, false);
         } else {
-            i = new ItemStack(XMaterial.SPAWNER.parseMaterial(), amount);
+            i = new ItemStack(Material.valueOf(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER"), amount);
 
             //Lots of casting...
             ItemMeta itemMeta = i.getItemMeta();
@@ -70,14 +69,14 @@ public class SpawnerUtils {
     /** Plays sound for Player */
     public static void playSound(SCPlugin plugin, Player player, String soundPath) {
         FileConfiguration config = plugin.getConfig();
-        XSound xSound = XSound.matchXSound(config.getString("sounds." + soundPath)).orElse(XSound.UI_BUTTON_CLICK);
-        player.playSound(player.getLocation(), xSound.parseSound(), 1, 1);
+        //XSound xSound = XSound.matchXSound(config.getString("sounds." + soundPath)).orElse(XSound.UI_BUTTON_CLICK);
+        //player.playSound(player.getLocation(), xSound.parseSound(), 1, 1);
     }
 
     /** Returns CustomEntityType from spawner itemStack */
     public static CustomEntityType typeFromSpawner(ItemStack itemStack) {
 
-        if (itemStack.getType() == XMaterial.SPAWNER.parseMaterial()) {
+        if (itemStack.getType().name().equals(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER")) {
 
             if (Bukkit.getPluginManager().isPluginEnabled("MineableSpawners")) {
                 EntityType type = MineableSpawners.getApi().getEntityTypeFromItemStack(itemStack);

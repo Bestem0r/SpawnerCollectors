@@ -89,9 +89,9 @@ public class Collector {
             player.sendMessage(ConfigManager.getMessage("messages.not_supported"));
             return false;
         }
-        //Bukkit.getLogger().info("EntityType: " + type.name());
         //Check if owner has permission for mob
-        if (player != null && this.plugin.isMorePermissions() && !this.owner.isOp() && this.owner.getEffectivePermissions().stream()
+        if (player != null  && !this.owner.hasPermission("spawnercollectors.bypass_limit")
+                && this.plugin.isMorePermissions() && !this.owner.isOp() && this.owner.getEffectivePermissions().stream()
                 .noneMatch((s) -> s.getPermission().startsWith("spawnercollectors.spawner." + type.name().toLowerCase()))) {
 
             player.sendMessage(ConfigManager.getMessage("messages.no_permission_mob"));
@@ -137,7 +137,7 @@ public class Collector {
                 return false;
             }
             //Check if new amount will exceed per-mob permission limit
-            if (player != null && this.plugin.isMorePermissions() && !owner.isOp() && max != 0 && max < amount + collector.getSpawnerAmount()) {
+            if (player != null && this.plugin.isMorePermissions() && max != 0 && max < amount + collector.getSpawnerAmount() && !this.owner.hasPermission("spawnercollectors.bypass_limit")) {
                 player.sendMessage(ConfigManager.getMessage("messages.reached_max_spawners").replace("%max%", String.valueOf(max)));
                 return false;
             }

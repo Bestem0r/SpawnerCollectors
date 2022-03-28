@@ -1,6 +1,5 @@
 package me.bestem0r.spawnercollectors.loot;
 
-import com.cryptomorin.xseries.XMaterial;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utils.EntityBuilder;
@@ -11,6 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
+import net.bestemor.core.config.VersionUtils;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -58,16 +58,22 @@ public class LootManager {
             for (String mob : mobs.getKeys(false)) {
 
                 ConfigurationSection items = plugin.getConfig().getConfigurationSection("custom_loot_tables.mobs." + mob);
-                for (String item : items.getKeys(false)) {
+                if (items == null) { continue; }
+                for (String itemID : items.getKeys(false)) {
 
-                    Material material = XMaterial.matchXMaterial(item).orElse(XMaterial.STONE).parseMaterial();
-                    //Bukkit.getLogger().info("Loaded " + material);
-                    double probability = plugin.getConfig().getDouble("custom_loot_tables.mobs." + mob + "." + item + ".probability");
-                    int min = plugin.getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".min");
-                    int max = plugin.getConfig().getInt("custom_loot_tables.mobs." + mob + "." + item + ".max");
+                    ItemStack item;
+                    if (itemID.contains(":")) {
+                        String[] split = itemID.split(":");
+                        item = new ItemStack(Material.valueOf(split[0]), Short.parseShort(split[1]));
+                    } else {
+                        item = new ItemStack(Material.valueOf(itemID));
+                    }
+                    double probability = plugin.getConfig().getDouble("custom_loot_tables.mobs." + mob + "." + itemID + ".probability");
+                    int min = plugin.getConfig().getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".min");
+                    int max = plugin.getConfig().getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".max");
 
                     List<ItemLoot> loot = (customLoot.containsKey(mob) ? customLoot.get(mob) : new ArrayList<>());
-                    loot.add(new ItemLoot(material, probability, min, max));
+                    loot.add(new ItemLoot(item, probability, min, max));
                     customLoot.put(mob, loot);
                 }
             }
@@ -99,7 +105,7 @@ public class LootManager {
         if (ConfigManager.getBoolean(("custom_loot_tables.enable")) && plugin.getLootManager().getCustomLoot().containsKey(type.name())) {
             return lootFromCustom(plugin, type, amount);
         } else {
-            if (XMaterial.isNewVersion() && !type.isCustom()) {
+            if (VersionUtils.getMCVersion() >= 13 && !type.isCustom()) {
                 return lootFromVanilla(type.getEntityType(), player, amount);
             } else {
                 Bukkit.getLogger().severe("[SpawnerCollectors] Auto-generated loot is not supported for versions below 1.13! Please enable and use custom loot in config!");

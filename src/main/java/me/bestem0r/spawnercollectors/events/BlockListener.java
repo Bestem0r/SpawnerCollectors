@@ -1,10 +1,10 @@
 package me.bestem0r.spawnercollectors.events;
 
-import com.cryptomorin.xseries.XMaterial;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.CreatureSpawner;
@@ -20,7 +20,7 @@ import org.bukkit.inventory.ItemStack;
 public class BlockListener implements Listener {
 
     private final SCPlugin plugin;
-    private final XMaterial spawner = XMaterial.SPAWNER;
+    private final Material spawner = Material.valueOf(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER");
 
     public BlockListener(SCPlugin plugin) {
         this.plugin = plugin;
@@ -29,7 +29,7 @@ public class BlockListener implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
 
-        XMaterial mat = XMaterial.matchXMaterial(event.getBlock().getType());
+        Material mat = event.getBlock().getType();
         if (this.plugin.isDisablePlace() && mat == spawner && !event.getPlayer().hasPermission("spawnercollectors.bypass_place")) {
             event.getPlayer().sendMessage(ConfigManager.getMessage("messages.no_permission_place_spawner"));
             event.setCancelled(true);
@@ -39,7 +39,7 @@ public class BlockListener implements Listener {
     @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent event) {
 
-        XMaterial mat = XMaterial.matchXMaterial(event.getBlock().getType());
+        Material mat = event.getBlock().getType();
         if (mat == spawner && plugin.getConfig().getBoolean("enable_silktouch")) {
 
             ItemStack i = event.getPlayer().getInventory().getItemInHand();

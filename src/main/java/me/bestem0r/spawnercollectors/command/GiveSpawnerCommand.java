@@ -1,18 +1,20 @@
 package me.bestem0r.spawnercollectors.command;
 
-import com.cryptomorin.xseries.XSound;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.command.ISubCommand;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.Damageable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,15 +31,15 @@ public class GiveSpawnerCommand implements ISubCommand {
         this.plugin = plugin;
     }
 
-    public List<String> getCompletion(int index, String[] args) {
-        switch(index) {
-            case 0:
-                return Bukkit.getOnlinePlayers().stream().map(OfflinePlayer::getName).collect(Collectors.toList());
-            case 1:
-                return Arrays.asList("hand", "gui");
+    public List<String> getCompletion(String[] args) {
+        switch(args.length) {
             case 2:
+                return Bukkit.getOnlinePlayers().stream().map(OfflinePlayer::getName).collect(Collectors.toList());
+            case 3:
+                return Arrays.asList("hand", "gui");
+            case 4:
                 return Stream.of(EntityType.values()).filter((entityType) -> {
-                    return entityType.name().startsWith(args[2].toUpperCase(Locale.ROOT));
+                    return entityType.name().startsWith(args[3].toUpperCase(Locale.ROOT));
                 }).map(Enum::toString).map(String::toLowerCase).collect(Collectors.toList());
             default:
                 return new ArrayList<>();
@@ -73,7 +75,7 @@ public class GiveSpawnerCommand implements ISubCommand {
         switch(args[2]) {
             case "hand":
                 target.getInventory().addItem(SpawnerUtils.spawnerFromType(entityType, amount));
-                target.playSound(target.getLocation(), XSound.matchXSound("ENTITY_ITEM_PICKUP").orElse(XSound.ENTITY_ITEM_PICKUP).parseSound(), 1, 1);
+                target.playSound(target.getLocation(), Sound.valueOf(VersionUtils.getMCVersion() > 8 ? "ENTITY_ITEM_PICKUP" : "ITEM_PICKUP"), 1, 1);
                 break;
             case "gui":
                 Player player = null;
