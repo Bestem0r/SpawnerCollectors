@@ -16,10 +16,11 @@ public class CustomEntityType {
     }
 
     public CustomEntityType(String type) {
-        if (isEntity(type.toUpperCase(Locale.ROOT))) {
-            this.entityType = EntityType.valueOf(type.toUpperCase(Locale.ROOT));
+        type = type.toUpperCase(Locale.ROOT).replace("MUSHROOM", "MUSHROOM_COW");
+        if (isEntity(type)) {
+            this.entityType = EntityType.valueOf(type);
         } else {
-            this.customType = type.toUpperCase(Locale.ROOT);
+            this.customType = type;
             this.custom = true;
         }
     }

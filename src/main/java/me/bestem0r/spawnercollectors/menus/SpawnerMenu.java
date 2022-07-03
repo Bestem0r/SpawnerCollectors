@@ -11,19 +11,21 @@ import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
 import net.bestemor.core.menu.MenuContent;
 import net.bestemor.core.menu.MenuListener;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
 public class SpawnerMenu extends Menu {
 
     private final Collector collector;
+
+    private Instant nextWithdraw = Instant.now();
 
     public SpawnerMenu(MenuListener listener, Collector collector) {
         super(listener, 54,  ConfigManager.getString("menus.spawners.title"));
@@ -68,6 +70,11 @@ public class SpawnerMenu extends Menu {
 
                     Player player = (Player) event.getWhoClicked();
 
+                    if (Instant.now().isBefore(nextWithdraw)) {
+                        player.sendMessage(ConfigManager.getMessage("messages.withdraw_too_fast"));
+                        return;
+                    }
+
                     boolean morePermissions = ConfigManager.getBoolean("more_permissions");
 
                     if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.spawner")) {
@@ -91,6 +98,7 @@ public class SpawnerMenu extends Menu {
                         collector.updateEntityMenu();
                     }
 
+                    this.nextWithdraw = Instant.now().plusMillis(ConfigManager.getLong("withdraw_cooldown"));
                     player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
                     SCPlugin.log.add(ChatColor.stripColor(new Date() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + collected.getEntityType() + " Spawner"));
                     update();

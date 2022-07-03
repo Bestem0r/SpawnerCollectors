@@ -7,7 +7,7 @@
 
     <groupId>me.bestem0r.spawnercollectors</groupId>
     <artifactId>SpawnerCollectors</artifactId>
-    <version>1.7.3-SNAPSHOT</version>
+    <version>1.7.4-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -54,9 +54,9 @@
 
         <!-- HeadDatabase-API -->
         <dependency>
-            <groupId>me.arcaniax</groupId>
+            <groupId>com.arcaniax</groupId>
             <artifactId>HeadDatabase-API</artifactId>
-            <version>1.0.0</version>
+            <version>1.3.1</version>
             <scope>provided</scope>
         </dependency>
 
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bukkit</artifactId>
-            <version>2.2.1</version>
+            <version>3.0.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -129,9 +129,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.3.0-SNAPSHOT</version>
+                <version>3.2.0</version>
                 <configuration>
                     <relocations>
+                        <relocation>
+                            <pattern>org.bstats</pattern>
+                            <shadedPattern>net.bestemor.superhoppers.utils.bstats</shadedPattern>
+                        </relocation>
                         <relocation>
                             <pattern>com.zaxxer</pattern>
                             <shadedPattern>me.bestem0r.spawnercollectors.database.hikari</shadedPattern>
@@ -140,13 +144,10 @@
                             <pattern>org.slf4j</pattern>
                             <shadedPattern>me.bestem0r.spawnercollectors.database.slf4j</shadedPattern>
                         </relocation>
-                        <relocation>
-                            <pattern>org.bstats</pattern>
-                            <shadedPattern>me.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
-                        </relocation>
+
                         <relocation>
                             <pattern>net.bestemor.core</pattern>
-                            <shadedPattern>me.bestem0r.spawnercollectors.utils.core</shadedPattern>
+                            <shadedPattern>net.bestemor.core</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

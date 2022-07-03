@@ -85,6 +85,7 @@ public class Collector {
 
     /** Adds spawner */
     public boolean addSpawner(Player player, CustomEntityType type, int amount) {
+        Bukkit.getLogger().info("[SpawnerCollectors] Attempting to add type: " + type.name());
         if (!this.plugin.getLootManager().getMaterials().containsKey(type.name()) && player != null) {
             player.sendMessage(ConfigManager.getMessage("messages.not_supported"));
             return false;
@@ -313,6 +314,9 @@ public class Collector {
                 }
                 break;
             case MYSQL:
+                if (this.owner == null) {
+                    return;
+                }
                 plugin.getSqlManager().updatePlayerData(this);
                 plugin.getSqlManager().deleteEntityData(this);
                 for (EntityCollector collector : collectorEntities) {
