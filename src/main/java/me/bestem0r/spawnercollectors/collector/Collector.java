@@ -41,7 +41,6 @@ public class Collector {
     private boolean autoSell;
 
     private boolean loaded = false;
-    //private final List<Runnable> loadEvents = new ArrayList<>();
 
     public Collector(SCPlugin plugin, UUID uuid) {
         this.plugin = plugin;
@@ -57,8 +56,16 @@ public class Collector {
                     loadYAML();
             }
             loaded = true;
-            //loadEvents.forEach(Runnable::run);
-            //loadEvents.clear();
+
+            List<String> entities = new ArrayList<>();
+            Iterator<EntityCollector> it = collectorEntities.iterator();
+            while (it.hasNext()) {
+                EntityCollector collector = it.next();
+                if (entities.contains(collector.getEntityType().name())) {
+                    it.remove();
+                }
+                entities.add(collector.getEntityType().name());
+            }
         }, plugin.getStoreMethod() == DataStoreMethod.MYSQL ? ConfigManager.getInt("load_delay") : 1L);
     }
 
