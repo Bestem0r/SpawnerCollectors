@@ -78,6 +78,10 @@ spawner:
   spawns: 4
   min_time: 10 #Second
   max_time: 40 #Second
+  #Enabling this will give more loot when withdrawing
+  #mobs if the player holds an item with the looting
+  #enchantment.
+  enable_looting_enchantment: false
 
 
 

@@ -16,7 +16,9 @@ public class CustomEntityType {
     }
 
     public CustomEntityType(String type) {
-        type = type.toUpperCase(Locale.ROOT).replace("MUSHROOM", "MUSHROOM_COW");
+        if (type.equals("MUSHROOM")) {
+            type = "MUSHROOM_COW";
+        }
         if (isEntity(type)) {
             this.entityType = EntityType.valueOf(type);
         } else {

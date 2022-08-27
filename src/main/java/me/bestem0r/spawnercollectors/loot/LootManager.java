@@ -133,6 +133,11 @@ public class LootManager {
         Location location = player.getLocation();
 
         location.setY(location.getY() - 5);
+        ItemStack handItem = player.getInventory().getItemInHand().clone();
+        if (!ConfigManager.getBoolean("spawner.enable_looting_enchantment")) {
+            player.setItemInHand(null);
+            player.updateInventory();
+        }
         for (int i = 0; i < amount; i++) {
             Entity entity = EntityBuilder.createEntity(entityType, location);
 
@@ -153,6 +158,10 @@ public class LootManager {
             entity.remove();
             LootContext context = contextBuilder.build();
             loot.addAll(lootTable.populateLoot(ThreadLocalRandom.current(), context));
+        }
+        if (!ConfigManager.getBoolean("spawner.enable_looting_enchantment")) {
+            player.setItemInHand(handItem);
+            player.updateInventory();
         }
         return loot;
     }
