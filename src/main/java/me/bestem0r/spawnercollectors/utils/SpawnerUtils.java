@@ -11,6 +11,7 @@ import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Sound;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,9 +22,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.permissions.PermissionAttachmentInfo;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SpawnerUtils {
 
@@ -57,6 +55,7 @@ public class SpawnerUtils {
             blockStateMeta.setBlockState(blockState);
             i.setItemMeta(itemMeta);
         }
+        i.setAmount(amount);
         ItemMeta meta = i.getItemMeta();
 
         String entityName = WordUtils.capitalizeFully(type.name().replaceAll("_", " "));
@@ -67,10 +66,9 @@ public class SpawnerUtils {
     }
 
     /** Plays sound for Player */
-    public static void playSound(SCPlugin plugin, Player player, String soundPath) {
-        FileConfiguration config = plugin.getConfig();
-        //XSound xSound = XSound.matchXSound(config.getString("sounds." + soundPath)).orElse(XSound.UI_BUTTON_CLICK);
-        //player.playSound(player.getLocation(), xSound.parseSound(), 1, 1);
+    public static void playSound(Player player, String soundPath) {
+        Sound sound = ConfigManager.getSound(soundPath);
+        player.playSound(player.getLocation(), sound, 1 ,1);
     }
 
     /** Returns CustomEntityType from spawner itemStack */
@@ -100,16 +98,6 @@ public class SpawnerUtils {
             return new CustomEntityType(spawner.getSpawnedType());
         } else {
             return null;
-        }
-    }
-
-    public static int parseMCVersion() {
-        String version = Bukkit.getVersion();
-        Matcher matcher = Pattern.compile("MC: \\d\\.(\\d+)").matcher(version);
-        if (matcher.find()) {
-            return Integer.parseInt(matcher.group(1));
-        } else {
-            throw new IllegalArgumentException("Failed to parse server version from: " + version);
         }
     }
 

@@ -118,6 +118,7 @@ public class EntityCollector {
             itemMeta.setLore(ConfigManager.getListBuilder("menus.mobs.item_lore")
                     .replace("%amount%", String.valueOf(entityAmount))
                     .replaceCurrency("%worth%", BigDecimal.valueOf(getTotalWorth()))
+                    .replaceCurrency("%avg_production%", getMinutelyProduction())
                     .build());
 
             item.setItemMeta(itemMeta);
@@ -147,5 +148,13 @@ public class EntityCollector {
     }
     public int getSpawnerAmount() {
         return spawners.size();
+    }
+
+    public BigDecimal getMinutelyProduction() {
+        int spawnerAmount = spawners.size();
+        double avgTime = 60d / ((plugin.getSpawnTimeMax() + plugin.getSpawnTimeMin()) / 2.0d);
+        double avgSpawns = plugin.getSpawnAmount() * spawnerAmount * avgTime;
+        double avgMoney = plugin.getLootManager().getPrices().getOrDefault(entityType.name(), (double) 0) * avgSpawns;
+        return BigDecimal.valueOf(avgMoney);
     }
 }

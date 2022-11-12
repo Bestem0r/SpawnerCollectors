@@ -132,6 +132,7 @@ menus:
     item_lore: #Placeholders: %amount%
       - "&7Amount: &c%amount%"
       - "&7Worth: &a%worth%"
+      - "&7Avg. $/minute: &a%avg_production%/minute"
       - ""
       - "&7>> Left click to &aSell"
       - "&7>> Right click to &eWithdraw"
@@ -176,6 +177,7 @@ menus:
       name: "&aSell all"
       lore:
         - "&7Total worth: &a%worth%"
+        - "&7Avg. $/minute: &a%avg_production%/minute"
         - ""
         - "&7>> Click to &asell &7all"
         - "&7collected mobs!"

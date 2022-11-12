@@ -35,18 +35,6 @@ public class SpawnerMenu extends Menu {
     @Override
     protected void onCreate(MenuContent menuContent) {
         menuContent.fillBottom(ConfigManager.getItem("menus.items.filler").build());
-
-        boolean morePermissions = ConfigManager.getBoolean("more_permissions");
-
-        menuContent.setClickable(ConfigManager.getInt("menus.items.mobs.slot"), new Clickable(ConfigManager.getItem("menus.items.mobs").build(), (event) -> {
-            Player player = (Player) event.getWhoClicked();
-
-            if (morePermissions && !player.hasPermission("spawnercollectors.command.mobs")) {
-                player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
-            } else {
-                collector.openEntityMenu(player);
-            }
-        }));
         update();
     }
 
@@ -54,12 +42,28 @@ public class SpawnerMenu extends Menu {
     protected void onUpdate(MenuContent content) {
         double totalWorth = collector.getTotalWorth();
 
+        content.setClickable(ConfigManager.getInt("menus.items.mobs.slot"), new Clickable(ConfigManager.getItem("menus.items.mobs")
+                .replaceCurrency("%avg_production%", collector.getAverageProduction())
+                .build(), (event) -> {
+            Player player = (Player) event.getWhoClicked();
+
+            boolean morePermissions = ConfigManager.getBoolean("more_permissions");
+            if (morePermissions && !player.hasPermission("spawnercollectors.command.mobs")) {
+                player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
+            } else {
+                collector.openEntityMenu(player);
+            }
+        }));
+
         content.setClickable(ConfigManager.getInt("menus.items.sell_all.slot"), new Clickable(ConfigManager.getItem("menus.items.sell_all")
+                .replaceCurrency("%avg_production%", collector.getAverageProduction())
                 .replaceCurrency("%worth%", BigDecimal.valueOf(totalWorth)).build(), (event) -> {
             collector.sellAll((Player) event.getWhoClicked());
         }));
 
-        content.setClickable(ConfigManager.getInt("menus.items.auto_sell_slot"), new Clickable(ConfigManager.getItem("menus.items.auto_sell_" + collector.isAutoSell()).build(), (event) -> {
+        content.setClickable(ConfigManager.getInt("menus.items.auto_sell_slot"), new Clickable(ConfigManager.getItem("menus.items.auto_sell_" + collector.isAutoSell())
+                .replaceCurrency("%avg_production%", collector.getAverageProduction())
+                .build(), (event) -> {
             collector.toggleAutoSell((Player) event.getWhoClicked());
         }));
 

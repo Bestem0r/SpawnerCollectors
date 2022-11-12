@@ -11,7 +11,6 @@ import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
 import net.bestemor.core.menu.MenuContent;
 import net.bestemor.core.menu.MenuListener;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
@@ -41,15 +40,6 @@ public class EntityMenu extends Menu {
     @Override
     protected void onCreate(MenuContent menuContent) {
         menuContent.fillBottom(ConfigManager.getItem("menus.items.filler").build());
-        menuContent.setClickable(ConfigManager.getInt("menus.items.spawners.slot"), new Clickable(ConfigManager.getItem("menus.items.spawners").build(), (event) -> {
-            Player player = (Player) event.getWhoClicked();
-            if (ConfigManager.getBoolean("more_permissions") && !player.hasPermission("spawnercollectors.command.spawners")) {
-                player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
-            } else {
-                collector.openSpawnerMenu(player);
-            }
-        }));
-
         update();
     }
 
@@ -162,13 +152,27 @@ public class EntityMenu extends Menu {
             }
         }
 
+        content.setClickable(ConfigManager.getInt("menus.items.spawners.slot"), new Clickable(ConfigManager.getItem("menus.items.spawners")
+                .replaceCurrency("%avg_production%", collector.getAverageProduction())
+                .build(), (event) -> {
+            Player player = (Player) event.getWhoClicked();
+            if (ConfigManager.getBoolean("more_permissions") && !player.hasPermission("spawnercollectors.command.spawners")) {
+                player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
+            } else {
+                collector.openSpawnerMenu(player);
+            }
+        }));
+
         content.setClickable(ConfigManager.getInt("menus.items.sell_all.slot"), new Clickable(ConfigManager.getItem("menus.items.sell_all")
                 .replaceCurrency("%worth%", BigDecimal.valueOf(totalWorth))
+                .replaceCurrency("%avg_production%", collector.getAverageProduction())
                 .replace("%mobs%", String.valueOf(collector.getTotalMobCount())).build(), (event) -> {
 
             collector.sellAll((Player) event.getWhoClicked());
         }));
-        content.setClickable(ConfigManager.getInt("menus.items.auto_sell_slot"), new Clickable(ConfigManager.getItem("menus.items.auto_sell_" + collector.isAutoSell()).build(), (event) -> {
+        content.setClickable(ConfigManager.getInt("menus.items.auto_sell_slot"), new Clickable(ConfigManager.getItem("menus.items.auto_sell_" + collector.isAutoSell())
+                .replaceCurrency("%avg_production%", collector.getAverageProduction())
+                .build(), (event) -> {
 
             collector.toggleAutoSell((Player) event.getWhoClicked());
         }));

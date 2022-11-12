@@ -136,6 +136,7 @@ menus:
     item_lore: #Placeholders: %amount%
       - "&7Amount: &c%amount%"
       - "&7Worth: &a%worth%"
+      - "&7Avg. $/minute: &a%avg_production%/minute"
       - ""
       - "&7>> Left click to &aSell"
       - "&7>> Right click to &eWithdraw"

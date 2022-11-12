@@ -2,8 +2,6 @@ package me.bestem0r.spawnercollectors;
 
 import org.bukkit.entity.EntityType;
 
-import java.util.Locale;
-
 public class CustomEntityType {
 
     private boolean custom = false;
@@ -19,8 +17,8 @@ public class CustomEntityType {
         if (type.equals("MUSHROOM")) {
             type = "MUSHROOM_COW";
         }
-        if (isEntity(type)) {
-            this.entityType = EntityType.valueOf(type);
+        if (isEntity(type.toUpperCase())) {
+            this.entityType = EntityType.valueOf(type.toUpperCase());
         } else {
             this.customType = type;
             this.custom = true;

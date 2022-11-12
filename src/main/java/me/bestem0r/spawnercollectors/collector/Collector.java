@@ -156,7 +156,7 @@ public class Collector {
         }
 
         if (player != null) {
-            SpawnerUtils.playSound(this.plugin, player, "add_spawner");
+            SpawnerUtils.playSound(player, "add_spawner");
         }
 
         String spawnerName = ChatColor.RESET + WordUtils.capitalizeFully(type.name().replaceAll("_", " ")) + " Spawner";
@@ -183,7 +183,7 @@ public class Collector {
         economy.depositPlayer(player, total);
 
         if (total > 0) {
-            SpawnerUtils.playSound(plugin, player, "sell");
+            SpawnerUtils.playSound(player, "sell");
             player.sendMessage(ConfigManager.getCurrencyBuilder("messages.sell_all")
                     .replaceCurrency("%worth%", BigDecimal.valueOf(total))
                     .addPrefix().build());
@@ -204,7 +204,7 @@ public class Collector {
         economy.depositPlayer(player, collected.getTotalWorth());
 
         if (collected.getTotalWorth() > 0) {
-            SpawnerUtils.playSound(plugin, player, "sell");
+            SpawnerUtils.playSound(player, "sell");
             player.sendMessage(ConfigManager.getCurrencyBuilder("messages.sell")
                     .replaceCurrency("%worth%", BigDecimal.valueOf(collected.getTotalWorth()))
                     .addPrefix()
@@ -242,7 +242,7 @@ public class Collector {
 
         updateEntityMenuIfView();
         updateSpawnerMenuIfView();
-        SpawnerUtils.playSound(plugin, player, "toggle_auto_sell");
+        SpawnerUtils.playSound(player, "toggle_auto_sell");
     }
 
     public long getTotalMobCount() {
@@ -257,7 +257,7 @@ public class Collector {
             updateSpawnerMenu();
         }
         spawnerMenu.open(player);
-        SpawnerUtils.playSound(plugin, player, "spawners_open");
+        SpawnerUtils.playSound(player, "spawners_open");
     }
     /** Returns entity Inventory */
     public void openEntityMenu(Player player) {
@@ -267,7 +267,7 @@ public class Collector {
             entityMenu.update();
         }
         entityMenu.open(player);
-        SpawnerUtils.playSound(plugin, player, "mobs_open");
+        SpawnerUtils.playSound(player, "mobs_open");
     }
 
     /** Updates content of spawner menu */
@@ -368,5 +368,13 @@ public class Collector {
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    public BigDecimal getAverageProduction() {
+        BigDecimal total = BigDecimal.ZERO;
+        for (EntityCollector collected : collectorEntities) {
+            total = total.add(collected.getMinutelyProduction());
+        }
+        return total;
     }
 }
