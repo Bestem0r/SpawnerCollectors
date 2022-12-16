@@ -14,7 +14,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -67,7 +66,7 @@ public class SpawnerUtils {
 
     /** Plays sound for Player */
     public static void playSound(Player player, String soundPath) {
-        Sound sound = ConfigManager.getSound(soundPath);
+        Sound sound = ConfigManager.getSound("sounds." + soundPath);
         player.playSound(player.getLocation(), sound, 1 ,1);
     }
 
@@ -113,7 +112,7 @@ public class SpawnerUtils {
     }
 
     public static int getMaxMobs(OfflinePlayer player, CustomEntityType type) {
-        if (!player.isOnline()) {
+        if (player == null || !player.isOnline()) {
             return -1;
         }
         return player.getPlayer().getEffectivePermissions().stream()

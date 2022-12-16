@@ -29,7 +29,7 @@ public class Collector {
     private FileConfiguration config;
 
     private final UUID uuid;
-    private final Player owner;
+    private Player owner;
 
     private final List<EntityCollector> collectorEntities = new ArrayList<>();
 
@@ -220,6 +220,9 @@ public class Collector {
 
     /** Attempts to spawn virtual mobs */
     public void attemptSpawn() {
+        if (owner == null) {
+            owner = Bukkit.getPlayer(uuid);
+        }
         if (plugin.getAfkChecker().isAfkCheck() && plugin.getAfkChecker().isAFK(owner)) {
             return;
         }

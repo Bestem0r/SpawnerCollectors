@@ -9,12 +9,10 @@ import me.bestem0r.spawnercollectors.events.JoinListener;
 import me.bestem0r.spawnercollectors.events.QuitListener;
 import me.bestem0r.spawnercollectors.loot.LootManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.CorePlugin;
 import net.bestemor.core.command.CommandModule;
 import net.bestemor.core.config.ConfigManager;
-import net.bestemor.core.config.VersionUtils;
-import net.bestemor.core.menu.MenuListener;
 import net.milkbowl.vault.economy.Economy;
-import org.apache.commons.io.FileUtils;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -22,18 +20,16 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
 
 import static me.bestem0r.spawnercollectors.DataStoreMethod.MYSQL;
 import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
 
-public final class SCPlugin extends JavaPlugin {
+public final class SCPlugin extends CorePlugin {
 
     private Economy econ;
 
@@ -43,7 +39,7 @@ public final class SCPlugin extends JavaPlugin {
 
     private LootManager lootManager;
 
-    private final Map<OfflinePlayer, Double> earned = new HashMap<>();
+    private final Map<UUID, Double> earned = new HashMap<>();
 
     private boolean usingHeadDB;
     private boolean morePermissions;
@@ -57,41 +53,17 @@ public final class SCPlugin extends JavaPlugin {
     private int spawnTimeMin;
     private int spawnTimeMax;
 
-    private MenuListener menuListener;
-
     private SQLManager sqlManager;
     private DataStoreMethod storeMethod = YAML;
 
     @Override
-    public void onEnable() {
+    public void onPluginEnable() {
         Metrics metricsLite = new Metrics(this, 9427);
-
-        if (!new File(getDataFolder() + "/config.yml").exists()) {
-            if (VersionUtils.getMCVersion() < 13) {
-
-                String fileName = VersionUtils.getMCVersion() == 8 ? "config_1_8.yml" : "config_legacy.yml";
-                InputStream stream = getResource(fileName);
-
-                File target = new File(getDataFolder() + "/config.yml");
-                try {
-                    FileUtils.copyInputStreamToFile(Objects.requireNonNull(stream), target);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                saveDefaultConfig();
-            }
-        }
-        getConfig().options().copyDefaults();
-        ConfigManager.setConfig(getConfig());
-        ConfigManager.setPrefixPath("prefix");
 
         Bukkit.getPluginManager().registerEvents(new JoinListener(this), this);
         Bukkit.getPluginManager().registerEvents(new QuitListener(this), this);
         Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
         this.afkListener = new AFKListener(this);
-        this.menuListener = new MenuListener(this);
-        Bukkit.getPluginManager().registerEvents(menuListener, this);
         Bukkit.getPluginManager().registerEvents(afkListener, this);
 
         this.lootManager = new LootManager(this);
@@ -133,7 +105,7 @@ public final class SCPlugin extends JavaPlugin {
     }
 
     @Override
-    public void onDisable() {
+    public void onPluginDisable() {
         saveLog();
         for (Collector collector : collectors.values()) {
             collector.saveSync();
@@ -142,6 +114,11 @@ public final class SCPlugin extends JavaPlugin {
         if (storeMethod == MYSQL) {
             this.getSqlManager().onDisable();
         }
+    }
+
+    @Override
+    protected int getSpigotResourceID() {
+        return 85852;
     }
 
     /** Loads values from config */
@@ -212,19 +189,19 @@ public final class SCPlugin extends JavaPlugin {
         int minutes = getConfig().getInt("notify_interval");
         if (minutes > 0) {
             Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-                for (OfflinePlayer offlinePlayer : earned.keySet()) {
+                earned.remove(null);
+                for (UUID uuid : earned.keySet()) {
 
-                    if (offlinePlayer.isOnline()) {
-                        Player player = offlinePlayer.getPlayer();
-                        if (player == null) { continue; }
+                    Player player = Bukkit.getPlayer(uuid);
+                    if (player != null) {
 
-                        double playerEarned = Math.round(earned.get(offlinePlayer) * 100.0) / 100.0;
+                        double playerEarned = Math.round(earned.get(uuid) * 100.0) / 100.0;
                         player.sendMessage(ConfigManager.getCurrencyBuilder("messages.earned_notify")
                                 .replaceCurrency("%worth%", BigDecimal.valueOf(playerEarned))
                                 .replace("%time%", String.valueOf(minutes))
                                 .addPrefix()
                                 .build());
-                        SpawnerUtils.playSound(this, player, "notification");
+                        SpawnerUtils.playSound(player, "notification");
                     }
                 }
                 earned.clear();
@@ -280,9 +257,6 @@ public final class SCPlugin extends JavaPlugin {
     public SQLManager getSqlManager() {
         return sqlManager;
     }
-    public MenuListener getMenuListener() {
-        return menuListener;
-    }
 
     public void setStoreMethod(DataStoreMethod storeMethod) {
         this.storeMethod = storeMethod;
@@ -311,10 +285,15 @@ public final class SCPlugin extends JavaPlugin {
 
     /** Earned message methods */
     public void addEarned(OfflinePlayer player, double amount) {
-        if (earned.containsKey(player)) {
-            earned.replace(player, earned.get(player) + amount);
+        if (earned.containsKey(player.getUniqueId())) {
+            earned.replace(player.getUniqueId(), earned.get(player.getUniqueId()) + amount);
         } else {
-            earned.put(player, amount);
+            earned.put(player.getUniqueId(), amount);
         }
+    }
+
+    @Override
+    public boolean enableAutoUpdate() {
+        return false;
     }
 }
