@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.bestem0r.spawnercollectors</groupId>
   <artifactId>SpawnerCollectors</artifactId>
-  <version>1.7.4-SNAPSHOT</version>
+  <version>1.7.5-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>

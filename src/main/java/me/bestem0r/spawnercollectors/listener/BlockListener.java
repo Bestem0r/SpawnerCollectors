@@ -1,4 +1,4 @@
-package me.bestem0r.spawnercollectors.events;
+package me.bestem0r.spawnercollectors.listener;
 
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
@@ -13,8 +13,10 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class BlockListener implements Listener {
@@ -33,6 +35,18 @@ public class BlockListener implements Listener {
         if (this.plugin.isDisablePlace() && mat == spawner && !event.getPlayer().hasPermission("spawnercollectors.bypass_place")) {
             event.getPlayer().sendMessage(ConfigManager.getMessage("messages.no_permission_place_spawner"));
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInteractSpawner(PlayerInteractEvent event) {
+        if (ConfigManager.getBoolean("right_click_spawner_menu")) {
+
+            boolean spawnerInInventory = event.getAction() == Action.RIGHT_CLICK_AIR && event.getPlayer().getItemInHand().getType().name().contains("SPAWNER");
+            boolean spawnerClick = event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType().name().contains("SPAWNER");
+            if (spawnerInInventory || spawnerClick) {
+                SpawnerUtils.getCollector(plugin, event.getPlayer()).openSpawnerMenu(event.getPlayer());
+            }
         }
     }
 

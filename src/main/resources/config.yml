@@ -22,7 +22,7 @@ max_spawners: 0
 log: true
 #Auto-save interval (seconds)
 auto_save: 30
-#Require permissions for sell, withdraw, auto-sell
+#Require permissions for sale, withdraw, auto-sell
 #These permissions are:
 # - spawnercollectors.sell,
 # - spawnercollectors.auto_sell,
@@ -38,6 +38,8 @@ more_permissions: false
 #This also requires the player to have permission node:
 #spawnercollectors.receive_xp
 give_xp: true
+#When enabled, right-clicking spawner blocks or items, will open the spawner menu
+right_click_spawner_menu: true
 #If give_xp is enabled, withdrawn mobs will also mend tools and armor
 mending: true
 #This will disable placing spawners on the ground. Can be
@@ -181,6 +183,7 @@ menus:
       name: "&aSell all"
       lore:
         - "&7Total worth: &a%worth%"
+        - "&7Avg. $/minute: &a%avg_production%/minute"
         - ""
         - "&7>> Click to &asell &7all"
         - "&7collected mobs!"

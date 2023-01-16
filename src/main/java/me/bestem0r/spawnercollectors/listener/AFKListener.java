@@ -1,4 +1,4 @@
-package me.bestem0r.spawnercollectors.events;
+package me.bestem0r.spawnercollectors.listener;
 
 import me.bestem0r.spawnercollectors.SCPlugin;
 import net.bestemor.core.config.ConfigManager;

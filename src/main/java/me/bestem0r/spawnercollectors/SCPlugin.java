@@ -3,10 +3,10 @@ package me.bestem0r.spawnercollectors;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.command.*;
 import me.bestem0r.spawnercollectors.database.SQLManager;
-import me.bestem0r.spawnercollectors.events.AFKListener;
-import me.bestem0r.spawnercollectors.events.BlockListener;
-import me.bestem0r.spawnercollectors.events.JoinListener;
-import me.bestem0r.spawnercollectors.events.QuitListener;
+import me.bestem0r.spawnercollectors.listener.AFKListener;
+import me.bestem0r.spawnercollectors.listener.BlockListener;
+import me.bestem0r.spawnercollectors.listener.JoinListener;
+import me.bestem0r.spawnercollectors.listener.QuitListener;
 import me.bestem0r.spawnercollectors.loot.LootManager;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.CorePlugin;
@@ -95,7 +95,7 @@ public final class SCPlugin extends CorePlugin {
             collectors.put(player.getUniqueId(), new Collector(this, player.getUniqueId()));
         }
 
-        //Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.1-#1 of SpawnerCollectors! Please expect and report all bugs in my discord server");
+        //Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.5-#1 of SpawnerCollectors! Please expect and report all bugs in my discord server");
 
         if (getConfig().getLong("auto_save") > 0) {
             Bukkit.getScheduler().runTaskTimer(this, () -> {
