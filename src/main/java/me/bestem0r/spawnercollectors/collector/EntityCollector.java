@@ -5,7 +5,6 @@ import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.config.ConfigManager;
-import net.bestemor.core.config.VersionUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
@@ -84,9 +83,10 @@ public class EntityCollector {
 
     /** Returns ItemStack to display number of spawners */
     public ItemStack getSpawnerItem() {
-        ItemStack item = new ItemStack(Material.valueOf(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER"));
+        ItemStack item = SpawnerUtils.spawnerFromType(entityType, (int) Math.min(Math.max(getSpawnerAmount(), 1), 64), plugin);
 
         ItemMeta itemMeta = item.getItemMeta();
+
         itemMeta.setDisplayName(ChatColor.RESET + WordUtils.capitalizeFully(entityType.name().replaceAll("_", " ")));
 
         itemMeta.setLore(ConfigManager.getListBuilder("menus.spawners.item_lore").replace("%amount%", String.valueOf(spawners.size())).build());
@@ -121,6 +121,7 @@ public class EntityCollector {
                     .replaceCurrency("%avg_production%", getMinutelyProduction())
                     .build());
 
+            item.setAmount((int) Math.min(Math.max(entityAmount, 1), 64));
             item.setItemMeta(itemMeta);
             return item;
         } catch (Exception e) {

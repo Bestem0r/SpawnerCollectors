@@ -93,7 +93,7 @@ public class EntityMenu extends Menu {
                         if (ConfigManager.getBoolean("give_xp") && (!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"))) {
 
                             int xp = 0;
-                            if (ConfigManager.getBoolean(("custom_loot_tables.enable")) && lootManager.getCustomXP().containsKey(collected.getEntityType().name())) {
+                            if (lootManager.isUseCustomLoot() && lootManager.getCustomXP().containsKey(collected.getEntityType().name())) {
                                 xp = (int) (lootManager.getCustomXP().get(collected.getEntityType().name()) * withdrawAmount);
                             } else {
                                 for (EntityExperience e : EntityExperience.values()) {

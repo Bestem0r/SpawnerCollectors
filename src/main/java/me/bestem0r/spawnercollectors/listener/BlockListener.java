@@ -63,6 +63,7 @@ public class BlockListener implements Listener {
             boolean spawnerClick = event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType().name().contains("SPAWNER");
             if (spawnerInInventory || spawnerClick) {
                 SpawnerUtils.getCollector(plugin, event.getPlayer()).openSpawnerMenu(event.getPlayer());
+                event.setCancelled(true);
             }
         }
     }

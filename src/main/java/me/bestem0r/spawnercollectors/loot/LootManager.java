@@ -4,13 +4,15 @@ import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utils.EntityBuilder;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.VersionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
-import net.bestemor.core.config.VersionUtils;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -18,6 +20,7 @@ import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.Lootable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +37,8 @@ public class LootManager {
     private final Map<String, List<ItemLoot>> customLoot = new HashMap<>();
     private final Map<String, Integer> customXP = new HashMap<>();
 
+    private boolean useCustomLoot = false;
+
     public LootManager(SCPlugin plugin) {
         this.plugin = plugin;
     }
@@ -41,6 +46,10 @@ public class LootManager {
     public void load() {
         prices.clear();
         materials.clear();
+
+        File lootFile = new File(plugin.getDataFolder(), "loot.yml");
+        FileConfiguration lootConfig = YamlConfiguration.loadConfiguration(lootFile);
+        useCustomLoot = lootConfig.getBoolean("custom_loot_tables.enable");
 
         loadCustomLoot();
         loadEntities();
@@ -51,13 +60,16 @@ public class LootManager {
 
         customLoot.clear();
         customXP.clear();
-        if (!ConfigManager.getBoolean(("custom_loot_tables.enable"))) { return; }
+        if (!useCustomLoot) { return; }
 
-        ConfigurationSection mobs = plugin.getConfig().getConfigurationSection("custom_loot_tables.mobs");
+        File lootFile = new File(plugin.getDataFolder(), "loot.yml");
+        FileConfiguration lootConfig = YamlConfiguration.loadConfiguration(lootFile);
+
+        ConfigurationSection mobs = lootConfig.getConfigurationSection("custom_loot_tables.mobs");
         if (mobs != null) {
             for (String mob : mobs.getKeys(false)) {
 
-                ConfigurationSection items = plugin.getConfig().getConfigurationSection("custom_loot_tables.mobs." + mob);
+                ConfigurationSection items = lootConfig.getConfigurationSection("custom_loot_tables.mobs." + mob);
                 if (items == null) { continue; }
                 for (String itemID : items.getKeys(false)) {
 
@@ -68,9 +80,9 @@ public class LootManager {
                     } else {
                         item = new ItemStack(Material.valueOf(itemID));
                     }
-                    double probability = plugin.getConfig().getDouble("custom_loot_tables.mobs." + mob + "." + itemID + ".probability");
-                    int min = plugin.getConfig().getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".min");
-                    int max = plugin.getConfig().getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".max");
+                    double probability = lootConfig.getDouble("custom_loot_tables.mobs." + mob + "." + itemID + ".probability");
+                    int min = lootConfig.getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".min");
+                    int max = lootConfig.getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".max");
 
                     List<ItemLoot> loot = (customLoot.containsKey(mob) ? customLoot.get(mob) : new ArrayList<>());
                     loot.add(new ItemLoot(item, probability, min, max));
@@ -78,31 +90,29 @@ public class LootManager {
                 }
             }
         }
-        ConfigurationSection xp = plugin.getConfig().getConfigurationSection("custom_xp.mobs");
+        ConfigurationSection xp = lootConfig.getConfigurationSection("custom_xp.mobs");
         if (xp != null) {
             for (String mob : xp.getKeys(false)) {
-                customXP.put(mob, plugin.getConfig().getInt("custom_xp.mobs." + mob));
+                customXP.put(mob, lootConfig.getInt("custom_xp.mobs." + mob));
             }
         }
     }
 
     /** Load entity prices and material strings */
     private void loadEntities() {
-        ConfigurationSection priceSection = plugin.getConfig().getConfigurationSection("prices");
-        if (priceSection == null) { return; }
-        for (String entity : priceSection.getKeys(false)) {
-            prices.put(entity, plugin.getConfig().getDouble("prices." + entity));
-        }
-        ConfigurationSection materialSection = plugin.getConfig().getConfigurationSection("materials");
-        if (materialSection == null) { return; }
-        for (String entity : materialSection.getKeys(false)) {
-            materials.put(entity, plugin.getConfig().getString("materials." + entity));
+        File mobsFile = new File(plugin.getDataFolder(), "mobs.yml");
+        FileConfiguration mobsConfig = YamlConfiguration.loadConfiguration(mobsFile);
+        ConfigurationSection mobsSection = mobsConfig.getConfigurationSection("mobs");
+        if (mobsSection == null) { return; }
+        for (String entity : mobsSection.getKeys(false)) {
+            prices.put(entity, mobsConfig.getDouble("mobs." + entity + ".price"));
+            materials.put(entity, mobsConfig.getString("mobs." + entity + ".material"));
         }
     }
 
     /** Get loot from entity type */
     public List<ItemStack> lootFromType(CustomEntityType type, Player player, long amount) {
-        if (ConfigManager.getBoolean(("custom_loot_tables.enable")) && plugin.getLootManager().getCustomLoot().containsKey(type.name())) {
+        if (useCustomLoot && plugin.getLootManager().getCustomLoot().containsKey(type.name())) {
             return lootFromCustom(plugin, type, amount);
         } else {
             if (VersionUtils.getMCVersion() >= 13 && !type.isCustom()) {
@@ -180,5 +190,9 @@ public class LootManager {
     }
     public Map<String, Integer> getCustomXP() {
         return customXP;
+    }
+
+    public boolean isUseCustomLoot() {
+        return useCustomLoot;
     }
 }

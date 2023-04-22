@@ -1,0 +1,27 @@
+#--------------------- Mobs ---------------------#
+
+#If you want to use HeadDatabase IDs instead of vanilla
+#materials, enable HeadDB in the config.yml and place
+#'hdb:' in front of the id! E.g. hdb:10000
+mobs:
+  ZOMBIE:
+    material: ZOMBIE_SPAWN_EGG
+    price: 100
+  SKELETON:
+    material: SKELETON_SPAWN_EGG
+    price: 100
+  CREEPER:
+    material: CREEPER_SPAWN_EGG
+    price: 150
+  COW:
+    material: COW_SPAWN_EGG
+    price: 50
+  PIG:
+    material: PIG_SPAWN_EGG
+    price: 50
+  CHICKEN:
+    material: CHICKEN_SPAWN_EGG
+    price: 50
+  SHEEP:
+    material: SHEEP_SPAWN_EGG
+    price: 50

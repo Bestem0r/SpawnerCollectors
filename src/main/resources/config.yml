@@ -54,6 +54,8 @@ cancel_overflowing_items: false
 max_mobs: 1000
 #Cooldown in milliseconds between mob withdrawals
 withdraw_cooldown: 500
+#Enable HeadDatabase hook
+use_headdb: false
 #Enable this to turn off collectors for AFK players
 afk:
   enable: true
@@ -189,87 +191,3 @@ menus:
         - ""
         - "&7>> Click to &asell &7all"
         - "&7collected mobs!"
-
-
-#--------------------- Mob prices ---------------------#
-
-#Per mob worth. Remember to also set a material for each mob!
-prices:
-  SKELETON: 50
-  ZOMBIE: 10
-  COW: 5
-  PIG: 5
-
-#--------------------- Mob materials ---------------------#
-
-#Enable HeadDatabase hook
-use_headdb: false
-#If you want to use HeadDatabase IDs instead of vanilla
-#materials, enable HeadDB above and place 'hdb:' in front
-#of the id! E.g. hdb:10000
-materials:
-  ZOMBIE: ZOMBIE_HEAD #4187 recommended for HeadDB
-  SKELETON: SKELETON_SKULL #22402 recommended for HeadDB
-  COW: BEEF #335 recommended for HeadDB
-  PIG: PORKCHOP #337 recommended for HeadDB
-
-
-#------------------- Custom loot tables -------------------#
-
-custom_loot_tables:
-  #If you want to use custom loot tables, set this to true
-  enable: false
-  #List all mobs which should use custom loot tables. If a
-  #mob is not listed, it will default to it's vanilla table
-  mobs:
-    #EntityType of mob
-    SKELETON:
-      #Material
-      BONE:
-        #Probability of receiving this item
-        probability: 1
-        #Minimum amount
-        min: 0
-        #Maximum amount
-        max: 2
-      ARROW:
-        probability: 1
-        min: 0
-        max: 2
-    ZOMBIE:
-      ROTTEN_FLESH:
-        probability: 1
-        min: 0
-        max: 2
-      POTATO:
-        probability: 0.025
-        min: 1
-        max: 1
-      IRON_INGOT:
-        probability: 0.025
-        min: 1
-        max: 1
-      CARROT:
-        probability: 0.025
-        min: 1
-        max: 1
-    COW:
-      LEATHER:
-        probability: 1
-        min: 0
-        max: 2
-      BEEF:
-        probability: 1
-        min: 1
-        max: 3
-    PIG:
-      PORKCHOP:
-        probability: 1
-        min: 1
-        max: 3
-
-#Enabled if custom_loot_tables is enabled
-custom_xp:
-  mobs:
-    SKELETON: 10
-

@@ -16,6 +16,7 @@ import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -113,6 +114,51 @@ public final class SCPlugin extends CorePlugin {
         if (storeMethod == MYSQL) {
             this.getSqlManager().onDisable();
         }
+    }
+
+    @Override
+    public void onEnable() {
+
+        File mobFile = new File(this.getDataFolder() + "/mobs.yml");
+        if (!mobFile.exists()) {
+            this.saveResource("mobs.yml", false);
+            //Convert from old config
+            if (getConfig().getConfigurationSection("materials") == null || getConfig().getConfigurationSection("prices") == null) {
+                return;
+            }
+            FileConfiguration mobsConfig = YamlConfiguration.loadConfiguration(mobFile);
+            ConfigurationSection materials = getConfig().getConfigurationSection("materials");
+            for (String key : materials.getKeys(false)) {
+                mobsConfig.set("mobs." + key + ".material", materials.getString(key));
+                mobsConfig.set("mobs." + key + ".price", getConfig().getDouble("prices." + key));
+            }
+            try {
+                mobsConfig.save(mobFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        File lootFile = new File(this.getDataFolder() + "/loot.yml");
+        if (!lootFile.exists()) {
+            this.saveResource("loot.yml", false);
+            //Convert from old config
+            FileConfiguration lootConfig = YamlConfiguration.loadConfiguration(lootFile);
+            if (getConfig().getConfigurationSection("custom_loot_tables") != null) {
+                ConfigurationSection lootTables = getConfig().getConfigurationSection("custom_loot_tables");
+                lootConfig.set("custom_loot_tables", lootTables);
+            }
+            if (getConfig().getConfigurationSection("custom_xp") != null) {
+                ConfigurationSection xp = getConfig().getConfigurationSection("custom_xp");
+                lootConfig.set("custom_xp", xp);
+            }
+            try {
+                lootConfig.save(lootFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        super.onEnable();
     }
 
     @Override
@@ -292,10 +338,5 @@ public final class SCPlugin extends CorePlugin {
         } else {
             earned.put(player.getUniqueId(), amount);
         }
-    }
-
-    @Override
-    public boolean enableAutoUpdate() {
-        return false;
     }
 }
