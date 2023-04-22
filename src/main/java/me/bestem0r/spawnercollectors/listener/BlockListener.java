@@ -7,6 +7,7 @@ import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.config.VersionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
@@ -16,8 +17,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.SpawnerSpawnEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 public class BlockListener implements Listener {
 
@@ -35,6 +39,19 @@ public class BlockListener implements Listener {
         if (this.plugin.isDisablePlace() && mat == spawner && !event.getPlayer().hasPermission("spawnercollectors.bypass_place")) {
             event.getPlayer().sendMessage(ConfigManager.getMessage("messages.no_permission_place_spawner"));
             event.setCancelled(true);
+            return;
+        }
+
+        if (mat == spawner && VersionUtils.getMCVersion() > 13) {
+            PersistentDataContainer container = event.getItemInHand().getItemMeta().getPersistentDataContainer();
+            NamespacedKey key = new NamespacedKey(plugin, "spawnercollectors-spawner-type");
+
+            if (container.has(key, PersistentDataType.STRING)) {
+                EntityType type = EntityType.valueOf(container.get(key, PersistentDataType.STRING));
+                CreatureSpawner spawner = (CreatureSpawner) event.getBlock().getState();
+                spawner.setSpawnedType(type);
+                spawner.update();
+            }
         }
     }
 
@@ -54,7 +71,10 @@ public class BlockListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
 
         Material mat = event.getBlock().getType();
-        if (mat == spawner && plugin.getConfig().getBoolean("enable_silktouch")) {
+        if (mat == spawner && plugin.getConfig().getBoolean("enable_silktouch") &&
+                !Bukkit.getPluginManager().isPluginEnabled("SilkSpawners") &&
+                !Bukkit.getPluginManager().isPluginEnabled("SilkSpawners_v2") &&
+                !Bukkit.getPluginManager().isPluginEnabled("MineableSpawners")) {
 
             ItemStack i = event.getPlayer().getInventory().getItemInHand();
 
@@ -62,13 +82,20 @@ public class BlockListener implements Listener {
 
                 if (event.getBlock().getState() instanceof CreatureSpawner) {
                     EntityType type = ((CreatureSpawner) event.getBlock().getState()).getSpawnedType();
-                    ItemStack spawner = SpawnerUtils.spawnerFromType(new CustomEntityType(type), 1);
+                    ItemStack spawner = SpawnerUtils.spawnerFromType(new CustomEntityType(type), 1, plugin);
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         event.getBlock().getLocation().getWorld().dropItem(event.getBlock().getLocation(), spawner);
                     }, 2);
                     event.setExpToDrop(0);
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onSpawnerSpawn(SpawnerSpawnEvent event) {
+        if (ConfigManager.getBoolean("disable_spawner_spawn")) {
+            event.setCancelled(true);
         }
     }
 }

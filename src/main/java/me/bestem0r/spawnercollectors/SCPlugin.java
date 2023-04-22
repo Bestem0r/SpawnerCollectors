@@ -109,7 +109,6 @@ public final class SCPlugin extends CorePlugin {
         saveLog();
         for (Collector collector : collectors.values()) {
             collector.saveSync();
-
         }
         if (storeMethod == MYSQL) {
             this.getSqlManager().onDisable();
@@ -274,7 +273,10 @@ public final class SCPlugin extends CorePlugin {
         if (storeMethod == YAML) {
             collectors.values().forEach(Collector::saveSync);
             for (File file : new File(getDataFolder() + "/collectors/").listFiles()) {
-                collectors.values().add(new Collector(this, UUID.fromString(file.getName().split(".")[0])));
+                UUID uuid = UUID.fromString(file.getName().split(".")[0]);
+                if (!collectors.containsKey(uuid)) {
+                    collectors.put(uuid, new Collector(this, uuid));
+                }
             }
         }
     }

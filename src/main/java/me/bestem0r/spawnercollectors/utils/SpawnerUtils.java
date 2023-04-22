@@ -1,6 +1,8 @@
 package me.bestem0r.spawnercollectors.utils;
 
 import com.dnyferguson.mineablespawners.MineableSpawners;
+import de.corneliusmay.silkspawners.plugin.SilkSpawners;
+import de.corneliusmay.silkspawners.plugin.spawner.Spawner;
 import de.dustplanet.util.SilkUtil;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
@@ -8,10 +10,7 @@ import me.bestem0r.spawnercollectors.collector.Collector;
 import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.config.VersionUtils;
 import org.apache.commons.lang.WordUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
@@ -21,6 +20,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.permissions.PermissionAttachmentInfo;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class SpawnerUtils {
 
@@ -32,7 +33,7 @@ public class SpawnerUtils {
     }
 
     /** Returns spawner with set EntityType */
-    public static ItemStack spawnerFromType(CustomEntityType type, int amount) {
+    public static ItemStack spawnerFromType(CustomEntityType type, int amount, JavaPlugin plugin) {
 
         ItemStack i;
 
@@ -40,6 +41,10 @@ public class SpawnerUtils {
             i = MineableSpawners.getApi().getSpawnerFromEntityType(type.getEntityType());
         } else if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
             i = SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.name(), "", amount, false);
+        } else if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners_v2")) {
+            SilkSpawners silkSpawnersPlugin = (SilkSpawners) Bukkit.getPluginManager().getPlugin("SilkSpawners_v2");
+            Spawner spawner = new Spawner(silkSpawnersPlugin, type.getEntityType());
+            i = spawner.getItemStack();
         } else {
             i = new ItemStack(Material.valueOf(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER"), amount);
 
@@ -53,6 +58,14 @@ public class SpawnerUtils {
 
             blockStateMeta.setBlockState(blockState);
             i.setItemMeta(itemMeta);
+
+            if (VersionUtils.getMCVersion() > 13) {
+                NamespacedKey key = new NamespacedKey(plugin, "spawnercollectors-spawner-type");
+
+                ItemMeta meta = i.getItemMeta();
+                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, type.name());
+                i.setItemMeta(meta);
+            }
         }
         i.setAmount(amount);
         ItemMeta meta = i.getItemMeta();
@@ -86,6 +99,11 @@ public class SpawnerUtils {
                 if (name != null) {
                     return new CustomEntityType(name);
                 }
+            }
+            if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners_v2")) {
+                SilkSpawners silkSpawnersPlugin = (SilkSpawners) Bukkit.getPluginManager().getPlugin("SilkSpawners_v2");
+                Spawner spawner = new Spawner(silkSpawnersPlugin, itemStack);
+                return new CustomEntityType(spawner.getEntityType());
             }
 
             //Lots of casting...

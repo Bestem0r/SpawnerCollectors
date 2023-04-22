@@ -255,7 +255,7 @@ public class Collector {
     /** Returns spawner Inventory */
     public void openSpawnerMenu(Player player) {
         if (this.spawnerMenu == null) {
-            this.spawnerMenu = new SpawnerMenu(plugin.getMenuListener(), this);
+            this.spawnerMenu = new SpawnerMenu(plugin, this);
         } else {
             updateSpawnerMenu();
         }

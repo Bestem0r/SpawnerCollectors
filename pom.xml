@@ -7,7 +7,7 @@
 
     <groupId>me.bestem0r.spawnercollectors</groupId>
     <artifactId>SpawnerCollectors</artifactId>
-    <version>1.7.5-SNAPSHOT</version>
+    <version>1.7.6-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.9.2-R0.1-SNAPSHOT</version>
+            <version>1.14.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -93,6 +93,15 @@
             <version>7.2.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/resources/SilkSpawners.jar</systemPath>
+        </dependency>
+
+        <!-- SilkSpawners v2 -->
+        <dependency>
+            <groupId>de.corneliusmay.silkspawners</groupId>
+            <artifactId>SilkSpawners_v2</artifactId>
+            <version>2.2.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/resources/SilkSpawners_v2.jar</systemPath>
         </dependency>
 
         <dependency>

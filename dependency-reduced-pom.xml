@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.bestem0r.spawnercollectors</groupId>
   <artifactId>SpawnerCollectors</artifactId>
-  <version>1.7.5-SNAPSHOT</version>
+  <version>1.7.6-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>
@@ -62,16 +62,12 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.9.2-R0.1-SNAPSHOT</version>
+      <version>1.14.4-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
           <artifactId>commons-lang</artifactId>
           <groupId>commons-lang</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>json-simple</artifactId>
-          <groupId>com.googlecode.json-simple</groupId>
         </exclusion>
         <exclusion>
           <artifactId>guava</artifactId>
@@ -82,16 +78,12 @@
           <groupId>com.google.code.gson</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>ebean</artifactId>
-          <groupId>org.avaje</groupId>
+          <artifactId>bungeecord-chat</artifactId>
+          <groupId>net.md-5</groupId>
         </exclusion>
         <exclusion>
           <artifactId>snakeyaml</artifactId>
           <groupId>org.yaml</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>bungeecord-chat</artifactId>
-          <groupId>net.md-5</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -139,6 +131,13 @@
       <version>7.2.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/resources/SilkSpawners.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>de.corneliusmay.silkspawners</groupId>
+      <artifactId>SilkSpawners_v2</artifactId>
+      <version>2.2.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/resources/SilkSpawners_v2.jar</systemPath>
     </dependency>
   </dependencies>
   <properties>

@@ -14,7 +14,6 @@ import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.meta.Damageable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +73,7 @@ public class GiveSpawnerCommand implements ISubCommand {
 
         switch(args[2]) {
             case "hand":
-                target.getInventory().addItem(SpawnerUtils.spawnerFromType(entityType, amount));
+                target.getInventory().addItem(SpawnerUtils.spawnerFromType(entityType, amount, plugin));
                 target.playSound(target.getLocation(), Sound.valueOf(VersionUtils.getMCVersion() > 8 ? "ENTITY_ITEM_PICKUP" : "ITEM_PICKUP"), 1, 1);
                 break;
             case "gui":

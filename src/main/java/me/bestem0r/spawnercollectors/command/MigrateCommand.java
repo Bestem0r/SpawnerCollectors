@@ -1,8 +1,8 @@
 package me.bestem0r.spawnercollectors.command;
 
-import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.DataStoreMethod;
 import me.bestem0r.spawnercollectors.SCPlugin;
+import me.bestem0r.spawnercollectors.collector.Collector;
 import net.bestemor.core.command.ISubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -29,7 +29,6 @@ public class MigrateCommand implements ISubCommand {
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             if (plugin.getStoreMethod() == DataStoreMethod.YAML) {
-                plugin.saveAll();
                 plugin.loadAll();
                 plugin.setStoreMethod(DataStoreMethod.MYSQL);
                 plugin.saveAll();

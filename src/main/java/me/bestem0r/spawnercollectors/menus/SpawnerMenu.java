@@ -5,12 +5,12 @@ import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.collector.EntityCollector;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
+import net.bestemor.core.CorePlugin;
 import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.config.VersionUtils;
 import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
 import net.bestemor.core.menu.MenuContent;
-import net.bestemor.core.menu.MenuListener;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -24,12 +24,13 @@ import java.util.Map;
 public class SpawnerMenu extends Menu {
 
     private final Collector collector;
-
+    private final CorePlugin plugin;
     private Instant nextWithdraw = Instant.now();
 
-    public SpawnerMenu(MenuListener listener, Collector collector) {
-        super(listener, 54,  ConfigManager.getString("menus.spawners.title"));
+    public SpawnerMenu(CorePlugin corePlugin, Collector collector) {
+        super(corePlugin.getMenuListener(), 54,  ConfigManager.getString("menus.spawners.title"));
         this.collector = collector;
+        this.plugin = corePlugin;
     }
 
     @Override
@@ -88,7 +89,7 @@ public class SpawnerMenu extends Menu {
 
                     int withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
 
-                    ItemStack spawner = SpawnerUtils.spawnerFromType(collected.getEntityType(), withdrawAmount);
+                    ItemStack spawner = SpawnerUtils.spawnerFromType(collected.getEntityType(), withdrawAmount, plugin);
 
                     Map<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
                     for (int i : drop.keySet()) {
