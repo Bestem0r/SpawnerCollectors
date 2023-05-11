@@ -118,24 +118,27 @@ public final class SCPlugin extends CorePlugin {
 
     @Override
     public void onEnable() {
+        convertConfigs();
+        super.onEnable();
+    }
 
+    private void convertConfigs() {
         File mobFile = new File(this.getDataFolder() + "/mobs.yml");
         if (!mobFile.exists()) {
             this.saveResource("mobs.yml", false);
             //Convert from old config
-            if (getConfig().getConfigurationSection("materials") == null || getConfig().getConfigurationSection("prices") == null) {
-                return;
-            }
-            FileConfiguration mobsConfig = YamlConfiguration.loadConfiguration(mobFile);
-            ConfigurationSection materials = getConfig().getConfigurationSection("materials");
-            for (String key : materials.getKeys(false)) {
-                mobsConfig.set("mobs." + key + ".material", materials.getString(key));
-                mobsConfig.set("mobs." + key + ".price", getConfig().getDouble("prices." + key));
-            }
-            try {
-                mobsConfig.save(mobFile);
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (getConfig().getConfigurationSection("materials") != null && getConfig().getConfigurationSection("prices") != null) {
+                FileConfiguration mobsConfig = YamlConfiguration.loadConfiguration(mobFile);
+                ConfigurationSection materials = getConfig().getConfigurationSection("materials");
+                for (String key : materials.getKeys(false)) {
+                    mobsConfig.set("mobs." + key + ".material", materials.getString(key));
+                    mobsConfig.set("mobs." + key + ".price", getConfig().getDouble("prices." + key));
+                }
+                try {
+                    mobsConfig.save(mobFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         File lootFile = new File(this.getDataFolder() + "/loot.yml");
@@ -157,8 +160,6 @@ public final class SCPlugin extends CorePlugin {
                 e.printStackTrace();
             }
         }
-
-        super.onEnable();
     }
 
     @Override

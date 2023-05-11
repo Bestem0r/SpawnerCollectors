@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -59,9 +60,12 @@ public class BlockListener implements Listener {
     public void onInteractSpawner(PlayerInteractEvent event) {
         if (ConfigManager.getBoolean("right_click_spawner_menu")) {
 
-            boolean spawnerInInventory = event.getAction() == Action.RIGHT_CLICK_AIR && event.getPlayer().getItemInHand().getType().name().contains("SPAWNER");
-            boolean spawnerClick = event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType().name().contains("SPAWNER");
-            if (spawnerInInventory || spawnerClick) {
+            Player player = event.getPlayer();
+            boolean bypass = player.hasPermission("spawnercollectors.bypass_place");
+            boolean isSpawner = event.getPlayer().getItemInHand().getType().name().contains("SPAWNER");
+
+            isSpawner = isSpawner && ((plugin.isDisablePlace() && !bypass) || event.getAction() == Action.RIGHT_CLICK_AIR);
+            if (isSpawner) {
                 SpawnerUtils.getCollector(plugin, event.getPlayer()).openSpawnerMenu(event.getPlayer());
                 event.setCancelled(true);
             }

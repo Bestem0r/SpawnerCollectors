@@ -21,7 +21,7 @@
           <relocations>
             <relocation>
               <pattern>org.bstats</pattern>
-              <shadedPattern>net.bestemor.superhoppers.utils.bstats</shadedPattern>
+              <shadedPattern>me.bestem0r.spawnercollectors.utils.bstats</shadedPattern>
             </relocation>
             <relocation>
               <pattern>com.zaxxer</pattern>
@@ -33,7 +33,7 @@
             </relocation>
             <relocation>
               <pattern>net.bestemor.core</pattern>
-              <shadedPattern>net.bestemor.core</shadedPattern>
+              <shadedPattern>me.bestem0r.core</shadedPattern>
             </relocation>
           </relocations>
         </configuration>
