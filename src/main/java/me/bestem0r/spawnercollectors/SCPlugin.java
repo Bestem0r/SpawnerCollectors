@@ -8,6 +8,7 @@ import me.bestem0r.spawnercollectors.listener.BlockListener;
 import me.bestem0r.spawnercollectors.listener.JoinListener;
 import me.bestem0r.spawnercollectors.listener.QuitListener;
 import me.bestem0r.spawnercollectors.loot.LootManager;
+import me.bestem0r.spawnercollectors.placeholders.PlaceholderAPIExpansion;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.CorePlugin;
 import net.bestemor.core.command.CommandModule;
@@ -69,6 +70,7 @@ public final class SCPlugin extends CorePlugin {
 
         this.lootManager = new LootManager(this);
         setupEconomy();
+        setupPlaceholders();
         loadValues();
 
         if (storeMethod == MYSQL) {
@@ -264,6 +266,14 @@ public final class SCPlugin extends CorePlugin {
             Bukkit.getLogger().info("Could not find Economy Provider!");
         }
 
+    }
+    /** Setup PlaceholderAPI integration */
+    private void setupPlaceholders() {
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new PlaceholderAPIExpansion(this).register();
+        } else {
+            Bukkit.getLogger().info("Could not find PlaceholderAPI!");
+        }
     }
 
     //Getters

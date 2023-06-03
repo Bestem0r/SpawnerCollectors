@@ -142,4 +142,18 @@ public class SpawnerUtils {
                 .max()
                 .orElse(-1);
     }
+
+    public static int getMaxSpawners(OfflinePlayer player, CustomEntityType type) {
+        if (player == null || !player.isOnline()) {
+            return 0;
+        }
+        return player.getPlayer().getEffectivePermissions().stream()
+                .map(PermissionAttachmentInfo::getPermission)
+                .filter((s) -> s.startsWith("spawnercollectors.spawner." + type.name().toLowerCase() + "."))
+                .filter((s) -> s.length() > 26 + type.name().length() + 1)
+                .map((s) -> s.substring(26 + type.name().length() + 1))
+                .mapToInt(Integer::parseInt)
+                .max()
+                .orElse(0);
+    }
 }
