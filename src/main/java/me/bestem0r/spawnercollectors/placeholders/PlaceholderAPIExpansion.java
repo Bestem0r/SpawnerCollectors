@@ -34,7 +34,7 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
 
     @Override
     public String getAuthor() {
-        return "bestem0r";
+        return "Bestem0r";
     }
 
     @Override
