@@ -113,14 +113,7 @@ public class Collector {
 
         int max = 0;
         if (player != null) {
-            max = this.owner.getEffectivePermissions().stream()
-                    .map(PermissionAttachmentInfo::getPermission)
-                    .filter((s) -> s.startsWith("spawnercollectors.spawner." + type.name().toLowerCase() + "."))
-                    .filter((s) -> s.length() > 26 + type.name().length() + 1)
-                    .map((s) -> s.substring(26 + type.name().length() + 1))
-                    .mapToInt(Integer::parseInt)
-                    .max()
-                    .orElse(0);
+            max = SpawnerUtils.getMaxSpawners(this.owner, type);
         }
 
         //Check if amount is exceeding per-mob permission limit
