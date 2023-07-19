@@ -2,11 +2,9 @@ package me.bestem0r.spawnercollectors.command;
 
 import me.bestem0r.spawnercollectors.DataStoreMethod;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.collector.Collector;
 import net.bestemor.core.command.ISubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +27,10 @@ public class MigrateCommand implements ISubCommand {
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             if (plugin.getStoreMethod() == DataStoreMethod.YAML) {
-                plugin.loadAll();
+                plugin.getCollectorManager().loadAllExistingYAML();
                 plugin.setStoreMethod(DataStoreMethod.MYSQL);
-                plugin.saveAll();
-                plugin.collectors.clear();
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    plugin.collectors.put(player.getUniqueId(), new Collector(plugin, player.getUniqueId()));
-                }
+                plugin.getCollectorManager().saveAll();
+                plugin.getCollectorManager().load();
                 sender.sendMessage("§aSuccessfully migrated from YAML to MySQL!");
             }
         });

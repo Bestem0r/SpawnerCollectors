@@ -5,11 +5,10 @@
 
 package me.bestem0r.spawnercollectors.database;
 
-import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.CustomEntityType;
-import me.bestem0r.spawnercollectors.collector.EntityCollector;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import org.bukkit.Bukkit;
+import me.bestem0r.spawnercollectors.collector.Collector;
+import me.bestem0r.spawnercollectors.collector.EntityCollector;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,7 +16,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class SQLManager {
 
@@ -67,7 +65,7 @@ public class SQLManager {
         }
     }
 
-    public void updatePlayerData(Collector collector) {
+    public void updateCollector(Collector collector) {
 
         Connection connection = null;
         PreparedStatement statement = null;
@@ -75,7 +73,7 @@ public class SQLManager {
             connection = pool.getConnection();
 
             statement = connection.prepareStatement("REPLACE INTO player_data (owner_uuid, auto_sell) values (?,?)");
-            statement.setString(1, collector.getUuid().toString());
+            statement.setString(1, collector.getUuid());
             statement.setBoolean(2, collector.isAutoSell());
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -93,7 +91,7 @@ public class SQLManager {
             connection = pool.getConnection();
 
             statement = connection.prepareStatement("DELETE FROM entity_data WHERE owner_uuid = ?");
-            statement.setString(1, collector.getUuid().toString());
+            statement.setString(1, collector.getUuid());
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -103,7 +101,7 @@ public class SQLManager {
         }
     }
 
-    public void insertEntityData(UUID uuid, EntityCollector spawner) {
+    public void insertEntityData(String uuid, EntityCollector spawner) {
 
         Connection connection = null;
         PreparedStatement statement = null;
@@ -125,7 +123,7 @@ public class SQLManager {
         }
     }
 
-    public void loadPlayerData(Collector collector) {
+    public void loadCollector(Collector collector) {
 
         Connection connection = null;
         PreparedStatement statement = null;
@@ -148,7 +146,27 @@ public class SQLManager {
         }
     }
 
-    public List<EntityCollector> getEntityCollectors(UUID uuid) {
+    public void deleteCollector(Collector collector) {
+        deleteEntityData(collector);
+
+        Connection connection = null;
+        PreparedStatement statement = null;
+
+        try {
+            connection = pool.getConnection();
+
+            statement = connection.prepareStatement("DELETE FROM player_data WHERE owner_uuid = ?");
+            statement.setString(1, collector.getUuid().toString());
+
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            pool.close(connection, statement, null);
+        }
+    }
+
+    public List<EntityCollector> getEntityCollectors(String uuid) {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet result = null;
@@ -159,7 +177,7 @@ public class SQLManager {
             connection = pool.getConnection();
 
             statement = connection.prepareStatement( "SELECT * FROM entity_data WHERE owner_uuid = ?");
-            statement.setString(1, uuid.toString());
+            statement.setString(1, uuid);
 
             result = statement.executeQuery();
 

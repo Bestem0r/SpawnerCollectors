@@ -5,10 +5,7 @@ import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.utils.EntityBuilder;
 import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.config.VersionUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -176,9 +173,30 @@ public class LootManager {
         return loot;
     }
 
+    public double getPrice(String entity) {
+        return prices.getOrDefault(entity, 0.0);
+    }
 
-    public Map<String, Double> getPrices() {
-        return prices;
+    public double getPrice(String entity, OfflinePlayer player) {
+        if (player != null && player.isOnline()) {
+            return getPrice(entity, player.getPlayer());
+        } else {
+            return getPrice(entity);
+        }
+    }
+
+
+    public double getPrice(String entity, Player player) {
+        if (player != null) {
+            double boost = player.getEffectivePermissions().stream()
+                    .filter(perm -> perm.getPermission().startsWith("spawnercollectors.boost."))
+                    .map(perm -> perm.getPermission().replace("spawnercollectors.boost.", ""))
+                    .mapToDouble(Double::parseDouble)
+                    .max().orElse(1);
+
+            return prices.getOrDefault(entity, 0.0) * (boost);
+        }
+        return prices.getOrDefault(entity, 0.0);
     }
 
     public Map<String, String> getMaterials() {
@@ -194,5 +212,9 @@ public class LootManager {
 
     public boolean isUseCustomLoot() {
         return useCustomLoot;
+    }
+
+    public boolean isRegistered(String name) {
+        return prices.containsKey(name);
     }
 }

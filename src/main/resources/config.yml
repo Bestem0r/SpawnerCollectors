@@ -13,6 +13,15 @@ currency: '$'
 currency_before: false
 #Drop spawner item when spawner is broken with silktouch
 enable_silktouch: true
+#Enable enhanced placed spawners. This will make all placed spawners behave like
+#the /sc spawners menu. Spawners will not summon mobs in the world, but players
+#will be able to collect loot and sell "virtually" spawned mobs by right clicking
+#the spawner.
+enable_enhanced_placed_spawners: true
+#Enable enhanced spawner stacking. This will allow players to stack spawners
+#of the same type by clicking a spawner in their inventory when a spawner of
+#the same type is opened.
+enable_enhanced_spawner_stack: true
 #Item name for withdrawn spawners (Placeholder: %entity%)
 spawner_withdraw_name: "&r%entity% Spawner"
 #Maximum allowed spawner amount per entity type (0 for unlimited)
@@ -61,6 +70,7 @@ use_headdb: false
 afk:
   enable: true
   time: 300 #Seconds
+  percentage: 0.5 #Percentage of worth to collect
 
 
 #---------------- Data Storage Settings ----------------#

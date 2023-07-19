@@ -12,6 +12,7 @@ import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -28,8 +29,8 @@ public class Collector {
     private File file;
     private FileConfiguration config;
 
-    private final UUID uuid;
-    private Player owner;
+    private final String uuid;
+    private final OfflinePlayer owner;
 
     private final List<EntityCollector> collectorEntities = new ArrayList<>();
 
@@ -40,12 +41,12 @@ public class Collector {
 
     private boolean autoSell;
 
-    private boolean loaded = false;
+    protected boolean loaded = false;
 
-    public Collector(SCPlugin plugin, UUID uuid) {
+    public Collector(SCPlugin plugin, String uuid, OfflinePlayer owner) {
         this.plugin = plugin;
         this.uuid = uuid;
-        this.owner = Bukkit.getPlayer(uuid);
+        this.owner = owner;
 
         Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
             switch (plugin.getStoreMethod()) {
@@ -85,28 +86,31 @@ public class Collector {
         }
     }
     private void loadMYSQL() {
-        plugin.getSqlManager().loadPlayerData(this);
+        plugin.getSqlManager().loadCollector(this);
         this.collectorEntities.clear();
         this.collectorEntities.addAll(plugin.getSqlManager().getEntityCollectors(uuid));
     }
 
     /** Adds spawner */
     public boolean addSpawner(Player player, CustomEntityType type, int amount) {
-        Bukkit.getLogger().info("[SpawnerCollectors] Attempting to add type: " + type.name());
         if (!this.plugin.getLootManager().getMaterials().containsKey(type.name()) && player != null) {
             player.sendMessage(ConfigManager.getMessage("messages.not_supported"));
             return false;
         }
+
+        Player onlineOwner = owner.getPlayer();
+        boolean bothOnline = onlineOwner != null && player != null;
+
         //Check if owner has permission for mob
-        if (player != null  && !this.owner.hasPermission("spawnercollectors.bypass_limit")
-                && this.plugin.isMorePermissions() && !this.owner.isOp() && this.owner.getEffectivePermissions().stream()
+        if (bothOnline && onlineOwner.hasPermission("spawnercollectors.bypass_limit")
+                && this.plugin.isMorePermissions() && !onlineOwner.isOp() && onlineOwner.getEffectivePermissions().stream()
                 .noneMatch((s) -> s.getPermission().startsWith("spawnercollectors.spawner." + type.name().toLowerCase()))) {
 
             player.sendMessage(ConfigManager.getMessage("messages.no_permission_mob"));
             return false;
         }
         //Check if amount is exceeding global max limit
-        if (player != null && this.plugin.getMaxSpawners() > 0 && this.plugin.getMaxSpawners() < amount && !this.owner.hasPermission("spawnercollectors.bypass_limit")) {
+        if (bothOnline && this.plugin.getMaxSpawners() > 0 && this.plugin.getMaxSpawners() < amount && !onlineOwner.hasPermission("spawnercollectors.bypass_limit")) {
             player.sendMessage(ConfigManager.getMessage("messages.reached_max_spawners").replace("%max%", String.valueOf(this.plugin.getMaxSpawners())));
             return false;
         }
@@ -117,7 +121,7 @@ public class Collector {
         }
 
         //Check if amount is exceeding per-mob permission limit
-        if (player != null && this.plugin.isMorePermissions() && !owner.hasPermission("spawnercollectors.bypass_limit") && max != 0 && max < amount) {
+        if (bothOnline && plugin.isMorePermissions() && !onlineOwner.hasPermission("spawnercollectors.bypass_limit") && max != 0 && max < amount) {
             player.sendMessage(ConfigManager.getMessage("messages.reached_max_spawners").replace("%max%", String.valueOf(max)));
             return false;
         }
@@ -133,12 +137,12 @@ public class Collector {
 
             EntityCollector collector = optionalCollector.get();
             //Check if new amount will exceed global max limit
-            if (player != null && this.plugin.getMaxSpawners() > 0 && this.plugin.getMaxSpawners() < amount + collector.getSpawnerAmount() && !this.owner.hasPermission("spawnercollectors.bypass_limit")) {
+            if (bothOnline && this.plugin.getMaxSpawners() > 0 && this.plugin.getMaxSpawners() < amount + collector.getSpawnerAmount() && !onlineOwner.hasPermission("spawnercollectors.bypass_limit")) {
                 player.sendMessage(ConfigManager.getMessage("messages.reached_max_spawners").replace("%max%", String.valueOf(this.plugin.getMaxSpawners())));
                 return false;
             }
             //Check if new amount will exceed per-mob permission limit
-            if (player != null && this.plugin.isMorePermissions() && max != 0 && max < amount + collector.getSpawnerAmount() && !this.owner.hasPermission("spawnercollectors.bypass_limit")) {
+            if (bothOnline && this.plugin.isMorePermissions() && max != 0 && max < amount + collector.getSpawnerAmount() && !onlineOwner.hasPermission("spawnercollectors.bypass_limit")) {
                 player.sendMessage(ConfigManager.getMessage("messages.reached_max_spawners").replace("%max%", String.valueOf(max)));
                 return false;
             }
@@ -165,7 +169,8 @@ public class Collector {
     public void sellAll(Player player) {
 
         boolean morePermissions = plugin.isMorePermissions();
-        if (morePermissions && !player.hasPermission("spawnercollectors.sell")) {
+        Player onlineOwner = owner.getPlayer();
+        if (morePermissions && onlineOwner != null && !onlineOwner.hasPermission("spawnercollectors.sell")) {
             player.sendMessage(ConfigManager.getMessage("messages.no_permission_sell"));
             return;
         }
@@ -173,11 +178,11 @@ public class Collector {
         Economy economy = plugin.getEconomy();
         double total = getTotalWorth();
         collectorEntities.forEach(EntityCollector::clear);
-        economy.depositPlayer(player, total);
+        economy.depositPlayer(owner, total);
 
-        if (total > 0) {
+        if (total > 0 && onlineOwner != null) {
             SpawnerUtils.playSound(player, "sell");
-            player.sendMessage(ConfigManager.getCurrencyBuilder("messages.sell_all")
+            onlineOwner.sendMessage(ConfigManager.getCurrencyBuilder("messages.sell_all")
                     .replaceCurrency("%worth%", BigDecimal.valueOf(total))
                     .addPrefix().build());
 
@@ -194,12 +199,12 @@ public class Collector {
             return;
         }
         Economy economy = plugin.getEconomy();
-        economy.depositPlayer(player, collected.getTotalWorth());
+        economy.depositPlayer(player, collected.getTotalWorth(owner));
 
-        if (collected.getTotalWorth() > 0) {
+        if (collected.getTotalWorth(owner) > 0) {
             SpawnerUtils.playSound(player, "sell");
             player.sendMessage(ConfigManager.getCurrencyBuilder("messages.sell")
-                    .replaceCurrency("%worth%", BigDecimal.valueOf(collected.getTotalWorth()))
+                    .replaceCurrency("%worth%", BigDecimal.valueOf(collected.getTotalWorth(owner)))
                     .addPrefix()
                     .build());
         }
@@ -213,16 +218,16 @@ public class Collector {
 
     /** Attempts to spawn virtual mobs */
     public void attemptSpawn() {
-        if (owner == null) {
-            owner = Bukkit.getPlayer(uuid);
-        }
-        if (plugin.getAfkChecker().isAfkCheck() && plugin.getAfkChecker().isAFK(owner)) {
-            return;
+        double modifier = 1;
+        if (owner.isOnline()) {
+            Player player = owner.getPlayer();
+            if (player != null && plugin.getAfkChecker().isAfkCheck() && plugin.getAfkChecker().isAFK(player)) {
+                modifier = plugin.getConfig().getDouble("afk.percentage");
+            }
         }
         for (EntityCollector entityCollector : collectorEntities) {
-            entityCollector.attemptSpawn(autoSell, owner);
+            entityCollector.attemptSpawn(autoSell, owner, modifier);
         }
-        updateSpawnerMenuIfView();
         updateEntityMenuIfView();
     }
 
@@ -320,10 +325,10 @@ public class Collector {
                 if (this.owner == null) {
                     return;
                 }
-                plugin.getSqlManager().updatePlayerData(this);
+                plugin.getSqlManager().updateCollector(this);
                 plugin.getSqlManager().deleteEntityData(this);
                 for (EntityCollector collector : collectorEntities) {
-                    plugin.getSqlManager().insertEntityData(owner.getUniqueId(), collector);
+                    plugin.getSqlManager().insertEntityData(uuid, collector);
                 }
                 break;
             default:
@@ -357,20 +362,43 @@ public class Collector {
     public double getTotalWorth() {
         double total = 0;
         for (EntityCollector collected : collectorEntities) {
-            total += collected.getTotalWorth();
+            total += collected.getTotalWorth(owner);
         }
         return total;
     }
 
-    public UUID getUuid() {
+    public String getUuid() {
         return uuid;
+    }
+
+    public void delete() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+           switch (plugin.getStoreMethod()) {
+               case YAML:
+                   file.delete();
+                   break;
+               case MYSQL:
+                   plugin.getSqlManager().deleteCollector(this);
+                   break;
+               default:
+                   throw new IllegalStateException("Invalid data storage method!");
+           }
+        });
     }
 
     public BigDecimal getAverageProduction() {
         BigDecimal total = BigDecimal.ZERO;
         for (EntityCollector collected : collectorEntities) {
-            total = total.add(collected.getMinutelyProduction());
+            total = total.add(collected.getMinutelyProduction(owner));
         }
         return total;
+    }
+
+    public boolean isSingleEntity() {
+        return false;
+    }
+
+    public OfflinePlayer getOwner() {
+        return owner;
     }
 }

@@ -1,5 +1,8 @@
 package me.bestem0r.spawnercollectors.listener;
 
+import com.Zrips.CMI.CMI;
+import com.Zrips.CMI.Containers.CMIUser;
+import com.Zrips.CMI.events.CMIAfkEnterEvent;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import net.bestemor.core.config.ConfigManager;
 import org.bukkit.Bukkit;
@@ -28,15 +31,17 @@ public class AFKListener implements Listener {
         this.afkCheck = plugin.getConfig().getBoolean("afk.enable");
         this.time = plugin.getConfig().getInt("afk.time");
 
-        if (afkCheck) {
+        if (afkCheck && !Bukkit.getPluginManager().isPluginEnabled("CMI")) {
             runChecker();
+        } else if (afkCheck) {
+            Bukkit.getPluginManager().registerEvents(new CMIListener(), plugin);
         }
     }
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
 
-        if (afkCheck) {
+        if (afkCheck && !Bukkit.getPluginManager().isPluginEnabled("CMI")) {
             Player player = event.getPlayer();
 
             if (afkPlayers.contains(player.getUniqueId())) {
@@ -75,10 +80,31 @@ public class AFKListener implements Listener {
     }
 
     public boolean isAFK(Player player) {
+        if (Bukkit.getPluginManager().isPluginEnabled("CMI")) {
+            CMIUser user = CMI.getInstance().getPlayerManager().getUser(player);
+            return user.isAfk();
+        }
         return afkPlayers.contains(player.getUniqueId());
     }
 
     public boolean isAfkCheck() {
         return afkCheck;
+    }
+
+
+    private static class CMIListener implements Listener {
+
+        @EventHandler
+        public void onAFKEnter(CMIAfkEnterEvent event) {
+            event.getPlayer().sendMessage(ConfigManager.getMessage("messages.afk"));
+        }
+
+        @EventHandler
+        public void onAFKLeave(CMIAfkEnterEvent event) {
+            String message = ConfigManager.getMessage("messages.no_longer_afk");
+            if (!message.equals("")) {
+                event.getPlayer().sendMessage(message);
+            }
+        }
     }
 }

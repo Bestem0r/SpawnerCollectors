@@ -2,6 +2,7 @@ package me.bestem0r.spawnercollectors.listener;
 
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
+import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.config.VersionUtils;
@@ -37,7 +38,7 @@ public class BlockListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
 
         Material mat = event.getBlock().getType();
-        if (this.plugin.isDisablePlace() && mat == spawner && !event.getPlayer().hasPermission("spawnercollectors.bypass_place")) {
+        if (plugin.isDisablePlace() && mat == spawner && !event.getPlayer().hasPermission("spawnercollectors.bypass_place")) {
             event.getPlayer().sendMessage(ConfigManager.getMessage("messages.no_permission_place_spawner"));
             event.setCancelled(true);
             return;
@@ -52,6 +53,11 @@ public class BlockListener implements Listener {
                 CreatureSpawner spawner = (CreatureSpawner) event.getBlock().getState();
                 spawner.setSpawnedType(type);
                 spawner.update();
+
+                if (!ConfigManager.getBoolean("enable_enhanced_placed_spawners")) {
+                    return;
+                }
+                event.setCancelled(!plugin.getCollectorManager().addPlacedCollector(event.getBlock().getLocation(), event.getPlayer(), type));
             }
         }
     }
@@ -68,6 +74,14 @@ public class BlockListener implements Listener {
             if (isSpawner) {
                 SpawnerUtils.getCollector(plugin, event.getPlayer()).openSpawnerMenu(event.getPlayer());
                 event.setCancelled(true);
+                return;
+            }
+        }
+
+        if (ConfigManager.getBoolean("enable_enhanced_placed_spawners") && event.getClickedBlock() != null) {
+            if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType() == spawner) {
+                plugin.getCollectorManager().openPlacedCollector(event.getClickedBlock().getLocation(), event.getPlayer());
+                event.setCancelled(true);
             }
         }
     }
@@ -76,6 +90,7 @@ public class BlockListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
 
         Material mat = event.getBlock().getType();
+
         if (mat == spawner && plugin.getConfig().getBoolean("enable_silktouch") &&
                 !Bukkit.getPluginManager().isPluginEnabled("SilkSpawners") &&
                 !Bukkit.getPluginManager().isPluginEnabled("SilkSpawners_v2") &&
@@ -88,18 +103,46 @@ public class BlockListener implements Listener {
                 if (event.getBlock().getState() instanceof CreatureSpawner) {
                     EntityType type = ((CreatureSpawner) event.getBlock().getState()).getSpawnedType();
                     ItemStack spawner = SpawnerUtils.spawnerFromType(new CustomEntityType(type), 1, plugin);
+
+                    int amount = 1;
+                    String uuid = SpawnerUtils.locationToBase64(event.getBlock().getLocation());
+                    Collector collector = plugin.getCollectorManager().getCollector(uuid);
+                    if (collector != null) {
+                        amount = collector.getCollectorEntities().get(0).getSpawnerAmount();
+                    }
+
+                    final int finalAmount = amount;
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        event.getBlock().getLocation().getWorld().dropItem(event.getBlock().getLocation(), spawner);
+                        int toRemove = finalAmount;
+
+                        while (toRemove > 0) {
+                            ItemStack drop = spawner.clone();
+                            drop.setAmount(Math.min(toRemove, 64));
+                            event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), drop);
+                            toRemove -= 64;
+                        }
+
                     }, 2);
                     event.setExpToDrop(0);
                 }
             }
+        }
+
+        if (mat == spawner && ConfigManager.getBoolean("enable_enhanced_placed_spawners")) {
+            plugin.getCollectorManager().removePlacedCollector(event.getBlock().getLocation(), event.getPlayer());
         }
     }
 
     @EventHandler
     public void onSpawnerSpawn(SpawnerSpawnEvent event) {
         if (ConfigManager.getBoolean("disable_spawner_spawn")) {
+            event.setCancelled(true);
+        }
+        if (!ConfigManager.getBoolean("enable_enhanced_placed_spawners")) {
+            return;
+        }
+        String uuid = SpawnerUtils.locationToBase64(event.getSpawner().getLocation());
+        if (plugin.getCollectorManager().getCollector(uuid) != null) {
             event.setCancelled(true);
         }
     }

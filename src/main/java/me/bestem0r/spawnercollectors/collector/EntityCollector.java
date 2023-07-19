@@ -38,17 +38,18 @@ public class EntityCollector {
     }
 
     /** Adds entities */
-    public void attemptSpawn(boolean autoSell, OfflinePlayer player) {
+    public void attemptSpawn(boolean autoSell, OfflinePlayer player, double modifier) {
 
         long spawned = spawners.stream().mapToLong(CollectedSpawner::attemptSpawn).sum();
+        spawned = (long) (spawned * modifier);
 
-        if (autoSell && entityType != null && plugin.getLootManager().getPrices().containsKey(entityType.name())) {
+        if (autoSell && entityType != null && plugin.getLootManager().isRegistered(entityType.name())) {
 
-            double worth = plugin.getLootManager().getPrices().get(entityType.name()) * spawned;
+            double worth = plugin.getLootManager().getPrice(entityType.name(), player) * spawned;
             if (worth > 0) {
                 Economy economy = plugin.getEconomy();
                 economy.depositPlayer(player, worth);
-                plugin.addEarned(player, worth);
+                plugin.getCollectorManager().addEarned(player, worth);
             }
         } else {
             int maxConfig = plugin.getConfig().getInt("max_mobs");
@@ -95,7 +96,7 @@ public class EntityCollector {
     }
 
     /** Returns ItemStack to display number of entities */
-    public ItemStack getEntityItem() {
+    public ItemStack getEntityItem(OfflinePlayer owner) {
         try {
             ItemStack item;
             String material = plugin.getLootManager().getMaterials().get(entityType.name());
@@ -117,8 +118,8 @@ public class EntityCollector {
 
             itemMeta.setLore(ConfigManager.getListBuilder("menus.mobs.item_lore")
                     .replace("%amount%", String.valueOf(entityAmount))
-                    .replaceCurrency("%worth%", BigDecimal.valueOf(getTotalWorth()))
-                    .replaceCurrency("%avg_production%", getMinutelyProduction())
+                    .replaceCurrency("%worth%", BigDecimal.valueOf(getTotalWorth(owner)))
+                    .replaceCurrency("%avg_production%", getMinutelyProduction(owner))
                     .build());
 
             item.setAmount((int) Math.min(Math.max(entityAmount, 1), 64));
@@ -133,8 +134,8 @@ public class EntityCollector {
     }
 
     /** Returns total worth (double) of the mobs collected */
-    public double getTotalWorth() {
-        return Math.round(plugin.getLootManager().getPrices().getOrDefault(entityType.name(), (double) 0) * entityAmount * 100.0) / 100.0;
+    public double getTotalWorth(OfflinePlayer owner) {
+        return Math.round(plugin.getLootManager().getPrice(entityType.name(), owner) * entityAmount * 100.0) / 100.0;
     }
 
     public void clear() {
@@ -151,11 +152,11 @@ public class EntityCollector {
         return spawners.size();
     }
 
-    public BigDecimal getMinutelyProduction() {
+    public BigDecimal getMinutelyProduction(OfflinePlayer owner) {
         int spawnerAmount = spawners.size();
         double avgTime = 60d / ((plugin.getSpawnTimeMax() + plugin.getSpawnTimeMin()) / 2.0d);
         double avgSpawns = plugin.getSpawnAmount() * spawnerAmount * avgTime;
-        double avgMoney = plugin.getLootManager().getPrices().getOrDefault(entityType.name(), (double) 0) * avgSpawns;
+        double avgMoney = plugin.getLootManager().getPrice(entityType.name(), owner) * avgSpawns;
         return BigDecimal.valueOf(avgMoney);
     }
 }

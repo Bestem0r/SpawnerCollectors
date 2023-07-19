@@ -48,120 +48,124 @@ public class EntityMenu extends Menu {
         double totalWorth = 0;
 
         for (int slot = 0; slot < 45; slot++) {
-            if (slot < collector.getCollectorEntities().size()) {
-                EntityCollector collected = collector.getCollectorEntities().get(slot);
-                content.setClickable(slot, new Clickable(collected.getEntityItem(), (event) -> {
+            if (slot >= collector.getCollectorEntities().size() || (slot > 0 && collector.isSingleEntity())) {
+                if (slot != 22 || !collector.isSingleEntity()) {
+                    content.setClickable(slot, new Clickable(null));
+                }
+                continue;
+            }
+            EntityCollector collected = collector.getCollectorEntities().get(slot);
+            content.setClickable(collector.isSingleEntity() ? 22 : slot, new Clickable(collected.getEntityItem(collector.getOwner()), (event) -> {
 
-                    Player player = (Player) event.getWhoClicked();
-                    if (event.getClick() == ClickType.LEFT) {
-                        collector.sell(player, collected);
+                Player player = (Player) event.getWhoClicked();
+                if (event.getClick() == ClickType.LEFT) {
+                    collector.sell(player, collected);
+                }
+                //Withdraw
+                if (event.getClick() == ClickType.RIGHT) {
+
+                    if (collected.getEntityAmount() <= 0) {
+                        return;
                     }
-                    //Withdraw
-                    if (event.getClick() == ClickType.RIGHT) {
 
-                        if (collected.getEntityAmount() <= 0) {
-                            return;
+                    boolean morePermissions = ConfigManager.getBoolean("more_permissions");
+                    if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.mob")) {
+                        player.sendMessage(ConfigManager.getMessage("messages.no_permission_withdraw_mob"));
+                        return;
+                    }
+                    if (Instant.now().isBefore(nextWithdraw)) {
+                        player.sendMessage(ConfigManager.getMessage("messages.withdraw_too_fast"));
+                        return;
+                    }
+                    if (!SpawnerUtils.hasAvailableSlot(player) && ConfigManager.getBoolean("cancel_overflowing_items")) {
+                        player.sendMessage(ConfigManager.getMessage("messages.inventory_full"));
+                        return;
+                    }
+
+                    long withdrawAmount = Math.min(collected.getEntityAmount(), 64);
+
+                    collected.removeEntities(withdrawAmount);
+
+                    for (ItemStack itemStack : lootManager.lootFromType(collected.getEntityType(), player, withdrawAmount)) {
+                        Map<Integer, ItemStack> drop = player.getInventory().addItem(itemStack);
+                        for (int i : drop.keySet()) {
+                            ItemStack item = drop.get(i);
+                            if (item != null && item.getType() != Material.AIR) {
+                                player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
+                            }
                         }
+                    }
+                    if (ConfigManager.getBoolean("give_xp") && (!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"))) {
 
-                        boolean morePermissions = ConfigManager.getBoolean("more_permissions");
-                        if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.mob")) {
-                            player.sendMessage(ConfigManager.getMessage("messages.no_permission_withdraw_mob"));
-                            return;
-                        }
-                        if (Instant.now().isBefore(nextWithdraw)) {
-                            player.sendMessage(ConfigManager.getMessage("messages.withdraw_too_fast"));
-                            return;
-                        }
-                        if (!SpawnerUtils.hasAvailableSlot(player) && ConfigManager.getBoolean("cancel_overflowing_items")) {
-                            player.sendMessage(ConfigManager.getMessage("messages.inventory_full"));
-                            return;
-                        }
-
-                        long withdrawAmount = Math.min(collected.getEntityAmount(), 64);
-
-                        collected.removeEntities(withdrawAmount);
-
-                        for (ItemStack itemStack : lootManager.lootFromType(collected.getEntityType(), player, withdrawAmount)) {
-                            Map<Integer, ItemStack> drop = player.getInventory().addItem(itemStack);
-                            for (int i : drop.keySet()) {
-                                ItemStack item = drop.get(i);
-                                if (item != null && item.getType() != Material.AIR) {
-                                    player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
+                        int xp = 0;
+                        if (lootManager.isUseCustomLoot() && lootManager.getCustomXP().containsKey(collected.getEntityType().name())) {
+                            xp = (int) (lootManager.getCustomXP().get(collected.getEntityType().name()) * withdrawAmount);
+                        } else {
+                            for (EntityExperience e : EntityExperience.values()) {
+                                if (e.name().equals(collected.getEntityType().name())) {
+                                    xp = e.getRandomAmount(withdrawAmount);
+                                    break;
                                 }
                             }
                         }
-                        if (ConfigManager.getBoolean("give_xp") && (!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"))) {
 
-                            int xp = 0;
-                            if (lootManager.isUseCustomLoot() && lootManager.getCustomXP().containsKey(collected.getEntityType().name())) {
-                                xp = (int) (lootManager.getCustomXP().get(collected.getEntityType().name()) * withdrawAmount);
-                            } else {
-                                for (EntityExperience e : EntityExperience.values()) {
-                                    if (e.name().equals(collected.getEntityType().name())) {
-                                        xp = e.getRandomAmount(withdrawAmount);
+                        if (ConfigManager.getBoolean("mending") && VersionUtils.getMCVersion() > 8) {
+                            List<ItemStack> mendable = new ArrayList<>();
+
+                            for (int i = 100; i < 104 && i < player.getInventory().getContents().length; i++) {
+                                ItemStack item = player.getInventory().getContents()[i];
+                                if (canBeRepaired(item)) {
+                                    mendable.add(item);
+                                }
+                            }
+                            ItemStack hand = player.getItemInHand();
+                            if (canBeRepaired(hand)) {
+                                mendable.add(hand);
+                            }
+
+                            if (!mendable.isEmpty()) {
+                                for (int i = 0; i < withdrawAmount && xp >= 2; i++) {
+                                    if (mendable.size() == 0) {
                                         break;
                                     }
-                                }
-                            }
-
-                            if (ConfigManager.getBoolean("mending") && VersionUtils.getMCVersion() > 8) {
-                                List<ItemStack> mendable = new ArrayList<>();
-
-                                for (int i = 100; i < 104 && i < player.getInventory().getContents().length; i++) {
-                                    ItemStack item = player.getInventory().getContents()[i];
-                                    if (canBeRepaired(item)) {
-                                        mendable.add(item);
+                                    ItemStack item = mendable.get(ThreadLocalRandom.current().nextInt(0, mendable.size()));
+                                    if (!repair(item)) {
+                                        mendable.remove(item);
                                     }
+                                    xp -= 2;
                                 }
-                                ItemStack hand = player.getItemInHand();
-                                if (canBeRepaired(hand)) {
-                                    mendable.add(hand);
-                                }
-
-                                if (!mendable.isEmpty()) {
-                                    for (int i = 0; i < withdrawAmount && xp >= 2; i++) {
-                                        if (mendable.size() == 0) {
-                                            break;
-                                        }
-                                        ItemStack item = mendable.get(ThreadLocalRandom.current().nextInt(0, mendable.size()));
-                                        if (!repair(item)) {
-                                            mendable.remove(item);
-                                        }
-                                        xp -= 2;
-                                    }
-                                }
-                                player.updateInventory();
                             }
-                            if (xp >= 0) {
-                                player.giveExp(xp);
-                                Sound s = Sound.valueOf(VersionUtils.getMCVersion() > 8 ? "ENTITY_EXPERIENCE_ORB_PICKUP" : "ORB_PICKUP");
-                                player.playSound(player.getLocation(), s, 1.0F, 1.0F);
-                            }
+                            player.updateInventory();
                         }
-
-                        this.nextWithdraw = Instant.now().plusMillis(ConfigManager.getLong("withdraw_cooldown"));
-                        player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
-                        update();
+                        if (xp >= 0) {
+                            player.giveExp(xp);
+                            Sound s = Sound.valueOf(VersionUtils.getMCVersion() > 8 ? "ENTITY_EXPERIENCE_ORB_PICKUP" : "ORB_PICKUP");
+                            player.playSound(player.getLocation(), s, 1.0F, 1.0F);
+                        }
                     }
 
-                }));
+                    this.nextWithdraw = Instant.now().plusMillis(ConfigManager.getLong("withdraw_cooldown"));
+                    player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
+                    update();
+                }
 
-                totalWorth += collected.getTotalWorth();
-            } else {
-                content.setClickable(slot, new Clickable(null));
-            }
+            }));
+
+            totalWorth += collected.getTotalWorth(collector.getOwner());
         }
 
-        content.setClickable(ConfigManager.getInt("menus.items.spawners.slot"), new Clickable(ConfigManager.getItem("menus.items.spawners")
-                .replaceCurrency("%avg_production%", collector.getAverageProduction())
-                .build(), (event) -> {
-            Player player = (Player) event.getWhoClicked();
-            if (ConfigManager.getBoolean("more_permissions") && !player.hasPermission("spawnercollectors.command.spawners")) {
-                player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
-            } else {
-                collector.openSpawnerMenu(player);
-            }
-        }));
+        if (!collector.isSingleEntity() || ConfigManager.getBoolean("enable_enhanced_spawner_stack")) {
+            content.setClickable(ConfigManager.getInt("menus.items.spawners.slot"), new Clickable(ConfigManager.getItem("menus.items.spawners")
+                    .replaceCurrency("%avg_production%", collector.getAverageProduction())
+                    .build(), (event) -> {
+                Player player = (Player) event.getWhoClicked();
+                if (ConfigManager.getBoolean("more_permissions") && !player.hasPermission("spawnercollectors.command.spawners")) {
+                    player.sendMessage(ConfigManager.getMessage("messages.no_permission_command"));
+                } else {
+                    collector.openSpawnerMenu(player);
+                }
+            }));
+        }
 
         content.setClickable(ConfigManager.getInt("menus.items.sell_all.slot"), new Clickable(ConfigManager.getItem("menus.items.sell_all")
                 .replaceCurrency("%worth%", BigDecimal.valueOf(totalWorth))

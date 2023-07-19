@@ -69,50 +69,55 @@ public class SpawnerMenu extends Menu {
         }));
 
         for (int slot = 0; slot < 45; slot++) {
-            if (slot < collector.getCollectorEntities().size()) {
-                EntityCollector collected = collector.getCollectorEntities().get(slot);
-                content.setClickable(slot, new Clickable(collected.getSpawnerItem(), (event) -> {
-
-                    Player player = (Player) event.getWhoClicked();
-
-                    if (Instant.now().isBefore(nextWithdraw)) {
-                        player.sendMessage(ConfigManager.getMessage("messages.withdraw_too_fast"));
-                        return;
-                    }
-
-                    boolean morePermissions = ConfigManager.getBoolean("more_permissions");
-
-                    if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.spawner")) {
-                        player.sendMessage(ConfigManager.getMessage("messages.no_permission_withdraw_spawner"));
-                        return;
-                    }
-
-                    int withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
-
-                    ItemStack spawner = SpawnerUtils.spawnerFromType(collected.getEntityType(), withdrawAmount, plugin);
-
-                    Map<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
-                    for (int i : drop.keySet()) {
-                        player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
-                    }
-                    collected.removeSpawners(withdrawAmount);
-
-                    if (collected.getSpawnerAmount() < 1) {
-                        collector.sell(player, collected);
-                        collector.getCollectorEntities().remove(collected);
-                        collector.updateEntityMenu();
-                    }
-
-                    this.nextWithdraw = Instant.now().plusMillis(ConfigManager.getLong("withdraw_cooldown"));
-                    player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
-                    SCPlugin.log.add(ChatColor.stripColor(new Date() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + collected.getEntityType() + " Spawner"));
-                    update();
-                }));
-
-                totalWorth += collected.getTotalWorth();
-            } else {
-                content.setClickable(slot, new Clickable(null));
+            if (slot >= collector.getCollectorEntities().size() || (slot > 0 && collector.isSingleEntity())) {
+                if (slot != 22 || !collector.isSingleEntity()) {
+                    content.setClickable(slot, new Clickable(null));
+                }
+                continue;
             }
+            EntityCollector collected = collector.getCollectorEntities().get(slot);
+            content.setClickable(collector.isSingleEntity() ? 22 : slot, new Clickable(collected.getSpawnerItem(), (event) -> {
+
+                Player player = (Player) event.getWhoClicked();
+
+                if (Instant.now().isBefore(nextWithdraw)) {
+                    player.sendMessage(ConfigManager.getMessage("messages.withdraw_too_fast"));
+                    return;
+                }
+
+                boolean morePermissions = ConfigManager.getBoolean("more_permissions");
+
+                if (morePermissions && !player.hasPermission("spawnercollectors.withdraw.spawner")) {
+                    player.sendMessage(ConfigManager.getMessage("messages.no_permission_withdraw_spawner"));
+                    return;
+                }
+
+                int withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
+                if (collector.isSingleEntity()) {
+                    withdrawAmount = Math.max(withdrawAmount - 1, 0);
+                }
+
+                ItemStack spawner = SpawnerUtils.spawnerFromType(collected.getEntityType(), withdrawAmount, plugin);
+
+                Map<Integer, ItemStack> drop = player.getInventory().addItem(spawner);
+                for (int i : drop.keySet()) {
+                    player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
+                }
+                collected.removeSpawners(withdrawAmount);
+
+                if (collected.getSpawnerAmount() < 1) {
+                    collector.sell(player, collected);
+                    collector.getCollectorEntities().remove(collected);
+                    collector.updateEntityMenu();
+                }
+
+                this.nextWithdraw = Instant.now().plusMillis(ConfigManager.getLong("withdraw_cooldown"));
+                player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
+                SCPlugin.log.add(ChatColor.stripColor(new Date() + ": " + player.getName() + " withdrew " + withdrawAmount + " " + collected.getEntityType().name() + " Spawner"));
+                update();
+            }));
+
+            totalWorth += collected.getTotalWorth(collector.getOwner());
         }
 
     }

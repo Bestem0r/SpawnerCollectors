@@ -23,13 +23,15 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Base64;
+
 public class SpawnerUtils {
 
     private SpawnerUtils() {}
 
     /** Returns collector based on Player */
     public static Collector getCollector(SCPlugin plugin, Player player) {
-        return plugin.collectors.get(player.getUniqueId());
+        return plugin.getCollectorManager().getCollector(player.getUniqueId().toString());
     }
 
     /** Returns spawner with set EntityType */
@@ -136,11 +138,30 @@ public class SpawnerUtils {
         return player.getPlayer().getEffectivePermissions().stream()
                 .map(PermissionAttachmentInfo::getPermission)
                 .filter((s) -> s.startsWith("spawnercollectors.mob." + type.name().toLowerCase() + "."))
-                .filter((s) -> s.length() > 22 + type.name().length() + 1)
-                .map((s) -> s.substring(22 + type.name().length() + 1))
+                .map((s) -> s.replace("spawnercollectors.mob." + type.name().toLowerCase() + ".", ""))
                 .mapToInt(Integer::parseInt)
                 .max()
                 .orElse(-1);
+    }
+
+    public static Location locationFromBase64(String base64) {
+        String decoded = new String(Base64.getDecoder().decode(base64));
+        String[] split = decoded.split("%");
+        String worldName = split[0];
+
+        int x = Integer.parseInt(split[1]);
+        int y = Integer.parseInt(split[2]);
+        int z = Integer.parseInt(split[3]);
+        return new Location(Bukkit.getWorld(worldName), x, y, z);
+    }
+
+    /** Returns encoded base64 string */
+    public static String locationToBase64(Location location) {
+        int x = location.getBlockX();
+        int y = location.getBlockY();
+        int z = location.getBlockZ();
+        String id = location.getWorld().getName() + "%" + x + "%" + y + "%" + z;
+        return Base64.getEncoder().encodeToString(id.getBytes());
     }
 
     public static int getMaxSpawners(OfflinePlayer player, CustomEntityType type) {

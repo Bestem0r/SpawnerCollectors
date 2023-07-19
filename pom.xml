@@ -7,7 +7,7 @@
 
     <groupId>me.bestem0r.spawnercollectors</groupId>
     <artifactId>SpawnerCollectors</artifactId>
-    <version>1.7.6-SNAPSHOT</version>
+    <version>1.8.0-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -131,7 +131,7 @@
         <dependency>
             <groupId>com.github.Bestem0r</groupId>
             <artifactId>BestemorCore</artifactId>
-            <version>328787c3d7</version>
+            <version>1.3.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -140,6 +140,28 @@
             <artifactId>commons-io</artifactId>
             <version>2.11.0</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.Gypopo</groupId>
+            <artifactId>EconomyShopGUI-API</artifactId>
+            <version>1.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.Zrips</groupId>
+            <artifactId>CMI</artifactId>
+            <version>9.0.0.5</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/resources/CMI9.0.0.5.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>net.Zrips</groupId>
+            <artifactId>CMILib</artifactId>
+            <version>1.0.2.6</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/resources/CMILib1.0.2.6.jar</systemPath>
         </dependency>
 
     </dependencies>

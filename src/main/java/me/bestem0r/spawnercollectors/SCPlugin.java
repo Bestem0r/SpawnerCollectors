@@ -1,6 +1,6 @@
 package me.bestem0r.spawnercollectors;
 
-import me.bestem0r.spawnercollectors.collector.Collector;
+import me.bestem0r.spawnercollectors.collector.CollectorManager;
 import me.bestem0r.spawnercollectors.command.*;
 import me.bestem0r.spawnercollectors.database.SQLManager;
 import me.bestem0r.spawnercollectors.listener.AFKListener;
@@ -12,21 +12,19 @@ import me.bestem0r.spawnercollectors.placeholders.PlaceholderAPIExpansion;
 import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.CorePlugin;
 import net.bestemor.core.command.CommandModule;
-import net.bestemor.core.config.ConfigManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import static me.bestem0r.spawnercollectors.DataStoreMethod.MYSQL;
 import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
@@ -35,13 +33,10 @@ public final class SCPlugin extends CorePlugin {
 
     private Economy econ;
 
-    public Map<UUID, Collector> collectors = new HashMap<>();
-
     public static List<String> log = new ArrayList<>();
 
     private LootManager lootManager;
-
-    private final Map<UUID, Double> earned = new HashMap<>();
+    private CollectorManager collectorManager;
 
     private boolean usingHeadDB;
     private boolean morePermissions;
@@ -62,6 +57,7 @@ public final class SCPlugin extends CorePlugin {
     public void onPluginEnable() {
         Metrics metricsLite = new Metrics(this, 9427);
 
+        this.collectorManager = new CollectorManager(this);
         Bukkit.getPluginManager().registerEvents(new JoinListener(this), this);
         Bukkit.getPluginManager().registerEvents(new QuitListener(this), this);
         Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
@@ -79,8 +75,8 @@ public final class SCPlugin extends CorePlugin {
             sqlManager.setupPlayerData();
         }
 
-        startSpawners();
-        startMessages();
+        collectorManager.startSpawners();
+        collectorManager.startMessages();
 
         CommandModule commandModule = new CommandModule.Builder(this)
                 .addSubCommand("reload", new ReloadCommand(this))
@@ -94,25 +90,15 @@ public final class SCPlugin extends CorePlugin {
 
         commandModule.register("sc");
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            collectors.put(player.getUniqueId(), new Collector(this, player.getUniqueId()));
-        }
-
         //Bukkit.getLogger().warning("[SpawnerCollectors] §cYou are running a §aBETA 1.7.5-#1 of SpawnerCollectors! Please expect and report all bugs in my discord server");
 
-        if (getConfig().getLong("auto_save") > 0) {
-            Bukkit.getScheduler().runTaskTimer(this, () -> {
-                collectors.values().forEach(Collector::saveAsync);
-            }, getConfig().getLong("auto_save") * 20, getConfig().getLong("auto_save") * 20);
-        }
+        collectorManager.load();
     }
 
     @Override
     public void onPluginDisable() {
         saveLog();
-        for (Collector collector : collectors.values()) {
-            collector.saveSync();
-        }
+        collectorManager.saveAll();
         if (storeMethod == MYSQL) {
             this.getSqlManager().onDisable();
         }
@@ -206,58 +192,15 @@ public final class SCPlugin extends CorePlugin {
     /** Reloads config values */
     public void reloadValues(){
         reloadConfig();
-        saveDefaultConfig();
 
-
-        Bukkit.getScheduler().cancelTasks(this);
         saveLog();
-        lootManager.load();
         loadValues();
 
-        startSpawners();
-        startMessages();
+        collectorManager.startSpawners();
+        collectorManager.startMessages();
     }
 
-    /** Starts async thread to replicate spawner mechanics */
-    private void startSpawners() {
-        long timer = 20L * getConfig().getInt("spawn_interval");
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            try {
-                for (Collector collector : collectors.values()) {
-                    collector.attemptSpawn();
-                }
-            } catch (ConcurrentModificationException e) {
-                Bukkit.getLogger().severe("[SpawnerCollectors] ConcurrentModificationException in spawner thread!");
-            }
-
-        }, timer, timer);
-    }
-    /** Async message thread for earned money by auto-sell */
-    private void startMessages() {
-        int minutes = getConfig().getInt("notify_interval");
-        if (minutes > 0) {
-            Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-                earned.remove(null);
-                for (UUID uuid : earned.keySet()) {
-
-                    Player player = Bukkit.getPlayer(uuid);
-                    if (player != null) {
-
-                        double playerEarned = Math.round(earned.get(uuid) * 100.0) / 100.0;
-                        player.sendMessage(ConfigManager.getCurrencyBuilder("messages.earned_notify")
-                                .replaceCurrency("%worth%", BigDecimal.valueOf(playerEarned))
-                                .replace("%time%", String.valueOf(minutes))
-                                .addPrefix()
-                                .build());
-                        SpawnerUtils.playSound(player, "notification");
-                    }
-                }
-                earned.clear();
-            }, (long) minutes * 20 * 60, (long) minutes * 20 * 60);
-        }
-    }
-
-    /** Setup Vault Economy integration */
+    /** Setup Vault Economy and Permission integration */
     private void setupEconomy() {
         RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
         if (economyProvider != null) {
@@ -265,7 +208,6 @@ public final class SCPlugin extends CorePlugin {
         } else {
             Bukkit.getLogger().info("Could not find Economy Provider!");
         }
-
     }
     /** Setup PlaceholderAPI integration */
     private void setupPlaceholders() {
@@ -314,6 +256,10 @@ public final class SCPlugin extends CorePlugin {
         return sqlManager;
     }
 
+    public CollectorManager getCollectorManager() {
+        return collectorManager;
+    }
+
     public void setStoreMethod(DataStoreMethod storeMethod) {
         this.storeMethod = storeMethod;
         if (storeMethod == MYSQL) {
@@ -323,31 +269,6 @@ public final class SCPlugin extends CorePlugin {
             this.sqlManager = new SQLManager(this);
             sqlManager.setupPlayerData();
             sqlManager.setupPlayerData();
-        }
-    }
-
-    public void loadAll() {
-        if (storeMethod == YAML) {
-            collectors.values().forEach(Collector::saveSync);
-            for (File file : new File(getDataFolder() + "/collectors/").listFiles()) {
-                UUID uuid = UUID.fromString(file.getName().split(".")[0]);
-                if (!collectors.containsKey(uuid)) {
-                    collectors.put(uuid, new Collector(this, uuid));
-                }
-            }
-        }
-    }
-
-    public void saveAll() {
-        collectors.values().forEach(Collector::saveSync);
-    }
-
-    /** Earned message methods */
-    public void addEarned(OfflinePlayer player, double amount) {
-        if (earned.containsKey(player.getUniqueId())) {
-            earned.replace(player.getUniqueId(), earned.get(player.getUniqueId()) + amount);
-        } else {
-            earned.put(player.getUniqueId(), amount);
         }
     }
 }
