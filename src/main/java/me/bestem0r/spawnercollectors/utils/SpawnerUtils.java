@@ -171,8 +171,7 @@ public class SpawnerUtils {
         return player.getPlayer().getEffectivePermissions().stream()
                 .map(PermissionAttachmentInfo::getPermission)
                 .filter((s) -> s.startsWith("spawnercollectors.spawner." + type.name().toLowerCase() + "."))
-                .filter((s) -> s.length() > 26 + type.name().length() + 1)
-                .map((s) -> s.substring(26 + type.name().length() + 1))
+                .map((s) -> s.replace("spawnercollectors.spawner." + type.name().toLowerCase() + ".", ""))
                 .mapToInt(Integer::parseInt)
                 .max()
                 .orElse(0);
