@@ -34,13 +34,17 @@ public class BlockListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (priority = EventPriority.HIGHEST)
     public void onBlockPlace(BlockPlaceEvent event) {
 
         Material mat = event.getBlock().getType();
         if (plugin.isDisablePlace() && mat == spawner && !event.getPlayer().hasPermission("spawnercollectors.bypass_place")) {
             event.getPlayer().sendMessage(ConfigManager.getMessage("messages.no_permission_place_spawner"));
             event.setCancelled(true);
+            return;
+        }
+
+        if (event.isCancelled()) {
             return;
         }
 
@@ -90,6 +94,7 @@ public class BlockListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
 
         Material mat = event.getBlock().getType();
+        Player player = event.getPlayer();
 
         if (mat == spawner && plugin.getConfig().getBoolean("enable_silktouch") &&
                 !Bukkit.getPluginManager().isPluginEnabled("SilkSpawners") &&
@@ -107,7 +112,14 @@ public class BlockListener implements Listener {
                     int amount = 1;
                     String uuid = SpawnerUtils.locationToBase64(event.getBlock().getLocation());
                     Collector collector = plugin.getCollectorManager().getCollector(uuid);
-                    if (collector != null) {
+                    boolean spawnerBreak = ConfigManager.getBoolean("enable_spawner_breaking");
+
+                    if (!spawnerBreak && collector != null && !collector.getOwner().getUniqueId().equals(player.getUniqueId())) {
+                        player.sendMessage(ConfigManager.getMessage("messages.not_owner"));
+                        event.setCancelled(true);
+                        return;
+                    }
+                    if (collector != null && !collector.getCollectorEntities().isEmpty()) {
                         amount = collector.getCollectorEntities().get(0).getSpawnerAmount();
                     }
 

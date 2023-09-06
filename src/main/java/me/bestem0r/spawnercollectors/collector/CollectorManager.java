@@ -205,6 +205,11 @@ public class CollectorManager {
         String uuid = SpawnerUtils.locationToBase64(location);
         Collector collector = collectors.get(uuid);
         if (collector != null) {
+            boolean spawnerBreak = ConfigManager.getBoolean("enable_spawner_breaking");
+            if (!spawnerBreak && !collector.getOwner().getUniqueId().equals(player.getUniqueId())) {
+                player.sendMessage(ConfigManager.getCurrencyBuilder("messages.not_owner").addPrefix().build());
+                return;
+            }
             collector.openEntityMenu(player);
         }
     }

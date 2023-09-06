@@ -18,6 +18,9 @@ enable_silktouch: true
 #will be able to collect loot and sell "virtually" spawned mobs by right clicking
 #the spawner.
 enable_enhanced_placed_spawners: true
+#Enabling this will let other players collect loot and break other players' spawners
+#(only if enhanced placed spawners are enabled)
+enable_spawner_breaking: false
 #Enable enhanced spawner stacking. This will allow players to stack spawners
 #of the same type by clicking a spawner in their inventory when a spawner of
 #the same type is opened.
@@ -125,6 +128,7 @@ messages:
   withdraw_too_fast: "&cYou are withdrawing too fast!"
   inventory_full: "&cYour inventory is full!"
   not_loaded: "&cPlease wait for your spawners to load!"
+  not_owner: "&cYou do not own this spawner!"
 
 sounds:
   spawners_open: BLOCK_CHEST_OPEN
