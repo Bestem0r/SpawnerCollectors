@@ -27,7 +27,19 @@ import java.util.Base64;
 
 public class SpawnerUtils {
 
+    private static SilkUtil silkUtil;
+    private static SilkSpawners silkSpawners;
+
     private SpawnerUtils() {}
+
+    public static void loadHooks() {
+        if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
+            silkUtil = SilkUtil.hookIntoSilkSpanwers();
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners_v2")) {
+            silkSpawners = (SilkSpawners) Bukkit.getPluginManager().getPlugin("SilkSpawners_v2");
+        }
+    }
 
     /** Returns collector based on Player */
     public static Collector getCollector(SCPlugin plugin, Player player) {
@@ -42,10 +54,9 @@ public class SpawnerUtils {
         if (Bukkit.getPluginManager().isPluginEnabled("MineableSpawners")) {
             i = MineableSpawners.getApi().getSpawnerFromEntityType(type.getEntityType());
         } else if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
-            i = SilkUtil.hookIntoSilkSpanwers().newSpawnerItem(type.name(), "", amount, false);
+            i = silkUtil.newSpawnerItem(type.name(), "", amount, false);
         } else if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners_v2")) {
-            SilkSpawners silkSpawnersPlugin = (SilkSpawners) Bukkit.getPluginManager().getPlugin("SilkSpawners_v2");
-            Spawner spawner = new Spawner(silkSpawnersPlugin, type.getEntityType());
+            Spawner spawner = new Spawner(silkSpawners, type.getEntityType());
             i = spawner.getItemStack();
         } else {
             i = new ItemStack(Material.valueOf(VersionUtils.getMCVersion() < 13 ? "MOB_SPAWNER" : "SPAWNER"), amount);
@@ -97,14 +108,13 @@ public class SpawnerUtils {
                 }
             }
             if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners")) {
-                String name = SilkUtil.hookIntoSilkSpanwers().getStoredSpawnerItemEntityID(itemStack);
+                String name = silkUtil.getStoredSpawnerItemEntityID(itemStack);
                 if (name != null) {
                     return new CustomEntityType(name);
                 }
             }
             if (Bukkit.getPluginManager().isPluginEnabled("SilkSpawners_v2")) {
-                SilkSpawners silkSpawnersPlugin = (SilkSpawners) Bukkit.getPluginManager().getPlugin("SilkSpawners_v2");
-                Spawner spawner = new Spawner(silkSpawnersPlugin, itemStack);
+                Spawner spawner = new Spawner(silkSpawners, itemStack);
                 return new CustomEntityType(spawner.getEntityType());
             }
 

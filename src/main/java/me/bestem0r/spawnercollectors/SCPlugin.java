@@ -57,6 +57,8 @@ public final class SCPlugin extends CorePlugin {
     public void onPluginEnable() {
         Metrics metricsLite = new Metrics(this, 9427);
 
+        SpawnerUtils.loadHooks();
+
         this.collectorManager = new CollectorManager(this);
         Bukkit.getPluginManager().registerEvents(new JoinListener(this), this);
         Bukkit.getPluginManager().registerEvents(new QuitListener(this), this);
