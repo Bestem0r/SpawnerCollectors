@@ -145,7 +145,7 @@
         <dependency>
             <groupId>com.github.Gypopo</groupId>
             <artifactId>EconomyShopGUI-API</artifactId>
-            <version>1.6.0</version>
+            <version>1.7.1</version>
         </dependency>
 
         <dependency>

@@ -41,8 +41,16 @@ public class AFKListener implements Listener {
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
 
+        if (event.getTo() == null) {
+            return;
+        }
+
         if (afkCheck && !Bukkit.getPluginManager().isPluginEnabled("CMI")) {
             Player player = event.getPlayer();
+
+            if (event.getTo().getDirection().equals(event.getFrom().getDirection())) {
+                return;
+            }
 
             if (afkPlayers.contains(player.getUniqueId())) {
                 String message = ConfigManager.getMessage("messages.no_longer_afk");
