@@ -2,7 +2,6 @@ package me.bestem0r.spawnercollectors.loot;
 
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
-import me.bestem0r.spawnercollectors.utils.EntityBuilder;
 import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.config.VersionUtils;
 import org.bukkit.*;
@@ -146,7 +145,7 @@ public class LootManager {
             player.updateInventory();
         }
         for (int i = 0; i < amount; i++) {
-            Entity entity = EntityBuilder.createEntity(entityType, location);
+            Entity entity = location.getWorld().spawnEntity(location, entityType);
 
             if (entityType == EntityType.MAGMA_CUBE) {
                 int random = (int) (Math.random() * 4 + 1);
@@ -157,6 +156,7 @@ public class LootManager {
             }
 
             Lootable lootable = (Lootable) entity;
+            assert lootable != null;
             LootTable lootTable = lootable.getLootTable();
 
             if (lootTable == null) { return new ArrayList<>(); }

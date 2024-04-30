@@ -69,6 +69,7 @@ public class BlockListener implements Listener {
     @EventHandler
     public void onInteractSpawner(PlayerInteractEvent event) {
         if (ConfigManager.getBoolean("right_click_spawner_menu")) {
+            if (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.LEFT_CLICK_AIR) { return; }
 
             Player player = event.getPlayer();
             boolean bypass = player.hasPermission("spawnercollectors.bypass_place");
