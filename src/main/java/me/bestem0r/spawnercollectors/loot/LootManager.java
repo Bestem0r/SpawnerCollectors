@@ -8,13 +8,12 @@ import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
-import org.bukkit.loot.Lootable;
+import org.bukkit.loot.LootTables;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -111,11 +110,11 @@ public class LootManager {
         if (useCustomLoot && plugin.getLootManager().getCustomLoot().containsKey(type.name())) {
             return lootFromCustom(plugin, type, amount);
         } else {
-            if (VersionUtils.getMCVersion() >= 13 && !type.isCustom()) {
+            if (VersionUtils.getMCVersion() >= 14 && !type.isCustom()) {
                 return lootFromVanilla(type.getEntityType(), player, amount);
             } else {
-                Bukkit.getLogger().severe("[SpawnerCollectors] Auto-generated loot is not supported for versions below 1.13! Please enable and use custom loot in config!");
-                player.sendMessage(ChatColor.RED + "[SpawnerCollectors] Unable to auto-generate loot for versions below 1.13! Please contact an administrator and check the console!");
+                Bukkit.getLogger().severe("[SpawnerCollectors] Auto-generated loot is not supported for versions below 1.14! Please enable and use custom loot in config!");
+                player.sendMessage(ChatColor.RED + "[SpawnerCollectors] Unable to auto-generate loot for versions below 1.14! Please contact an administrator and check the console!");
                 return new ArrayList<>();
             }
         }
@@ -138,33 +137,26 @@ public class LootManager {
         List<ItemStack> loot = new ArrayList<>();
         Location location = player.getLocation();
 
-        location.setY(location.getY() - 5);
         ItemStack handItem = player.getInventory().getItemInHand().clone();
         if (!ConfigManager.getBoolean("spawner.enable_looting_enchantment")) {
             player.setItemInHand(null);
             player.updateInventory();
         }
         for (int i = 0; i < amount; i++) {
-            Entity entity = location.getWorld().spawnEntity(location, entityType);
 
             if (entityType == EntityType.MAGMA_CUBE) {
                 int random = (int) (Math.random() * 4 + 1);
                 if (random == 1) {
                     loot.add(new ItemStack(Material.MAGMA_CREAM));
-                    continue;
                 }
+            } else {
+                LootTables lootTables = LootTables.valueOf(entityType.name());
+                LootTable lootTable = lootTables.getLootTable();
+
+                LootContext.Builder contextBuilder = new LootContext.Builder(location).lootedEntity(player).killer(player);
+                LootContext context = contextBuilder.build();
+                loot.addAll(lootTable.populateLoot(ThreadLocalRandom.current(), context));
             }
-
-            Lootable lootable = (Lootable) entity;
-            assert lootable != null;
-            LootTable lootTable = lootable.getLootTable();
-
-            if (lootTable == null) { return new ArrayList<>(); }
-            LootContext.Builder contextBuilder = new LootContext.Builder(location).lootedEntity(entity).killer(player);
-
-            entity.remove();
-            LootContext context = contextBuilder.build();
-            loot.addAll(lootTable.populateLoot(ThreadLocalRandom.current(), context));
         }
         if (!ConfigManager.getBoolean("spawner.enable_looting_enchantment")) {
             player.setItemInHand(handItem);

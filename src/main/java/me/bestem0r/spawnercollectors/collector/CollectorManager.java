@@ -18,6 +18,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
 
@@ -25,7 +26,7 @@ public class CollectorManager {
 
     private final SCPlugin plugin;
 
-    private final Map<String, Collector> collectors = new HashMap<>();
+    private final Map<String, Collector> collectors = new ConcurrentHashMap<>();
 
 
     private final Map<UUID, Double> earned = new HashMap<>();
@@ -153,7 +154,7 @@ public class CollectorManager {
 
     /** Earned message methods */
     public void addEarned(OfflinePlayer player, double amount) {
-        if (earned.containsKey(player.getUniqueId())) {
+        if (earned.containsKey(player.getUniqueId()) && earned.get(player.getUniqueId()) != null) {
             earned.replace(player.getUniqueId(), earned.get(player.getUniqueId()) + amount);
         } else {
             earned.put(player.getUniqueId(), amount);

@@ -15,7 +15,7 @@ currency_before: false
 enable_silktouch: true
 #Enable enhanced placed spawners. This will make all placed spawners behave like
 #the /sc spawners menu. Spawners will not summon mobs in the world, but players
-#will be able to collect loot and sell "virtually" spawned mobs by right clicking
+#will be able to collect loot and sell "virtually" spawned mobs by right-clicking
 #the spawner.
 enable_enhanced_placed_spawners: true
 #Enabling this will let other players collect loot and break other players' spawners
@@ -152,6 +152,8 @@ menus:
 
   #Sell/withdraw mobs menu
   mobs:
+    #Enabling this will make the menu swap the left and right click actions
+    swap_left_right: false
     #GUI title
     title: "&8Collected mobs"
     item_lore: #Placeholders: %amount%

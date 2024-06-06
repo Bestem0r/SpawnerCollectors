@@ -48,8 +48,8 @@ public class ConnectionPoolManager {
         this.port = config.getString("port");
 
         this.minimumConnections = 5;
-        this.maximumConnections = 100;
-        this.connectionTimeout = 30000;
+        this.maximumConnections = 15;
+        this.connectionTimeout = 3000;
     }
 
     private void setupPool() {
@@ -70,11 +70,10 @@ public class ConnectionPoolManager {
         config.setMinimumIdle(minimumConnections);
         config.setMaximumPoolSize(maximumConnections);
         config.setConnectionTimeout(connectionTimeout);
-        config.setLeakDetectionThreshold(3000);
-        config.setIdleTimeout(600000);
-        config.setMaxLifetime(1800000);
+        config.setLeakDetectionThreshold(2000);
+        config.setIdleTimeout(300000);
+        config.setMaxLifetime(900000);
 
-        //config.setConnectionTestQuery(testQuery);
         this.hikari = new HikariDataSource(config);
     }
 

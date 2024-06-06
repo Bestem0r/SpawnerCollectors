@@ -58,11 +58,11 @@ public class EntityMenu extends Menu {
             content.setClickable(collector.isSingleEntity() ? 22 : slot, new Clickable(collected.getEntityItem(collector.getOwner()), (event) -> {
 
                 Player player = (Player) event.getWhoClicked();
-                if (event.getClick() == ClickType.LEFT) {
+                boolean swap = ConfigManager.getBoolean("menus.mobs.swap_left_right");
+                if ((!swap && event.getClick() == ClickType.LEFT) || (swap && event.getClick() == ClickType.RIGHT)) {
                     collector.sell(player, collected);
-                }
-                //Withdraw
-                if (event.getClick() == ClickType.RIGHT) {
+
+                } else if ((!swap && event.getClick() == ClickType.RIGHT) || (swap && event.getClick() == ClickType.LEFT)) {
 
                     if (collected.getEntityAmount() <= 0) {
                         return;
