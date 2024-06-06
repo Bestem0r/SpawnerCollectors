@@ -9,5 +9,8 @@
         <module name="SpawnerCollectors" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="spawnercollectors-core" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

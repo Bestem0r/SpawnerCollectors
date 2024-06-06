@@ -54,6 +54,12 @@
             <artifactId>VaultAPI</artifactId>
             <version>1.7</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- HeadDatabase-API -->
@@ -106,6 +112,12 @@
             <version>2.2.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/resources/SilkSpawners_v2.jar</systemPath>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

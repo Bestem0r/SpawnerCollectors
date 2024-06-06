@@ -154,6 +154,12 @@
       <version>2.2.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/resources/SilkSpawners_v2.jar</systemPath>
+      <exclusions>
+        <exclusion>
+          <artifactId>bukkit</artifactId>
+          <groupId>org.bukkit</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.Zrips</groupId>
