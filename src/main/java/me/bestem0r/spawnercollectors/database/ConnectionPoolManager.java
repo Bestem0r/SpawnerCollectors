@@ -48,8 +48,8 @@ public class ConnectionPoolManager {
         this.port = config.getString("port");
 
         this.minimumConnections = 5;
-        this.maximumConnections = 15;
-        this.connectionTimeout = 3000;
+        this.maximumConnections = 30;
+        this.connectionTimeout = 20000;
     }
 
     private void setupPool() {
