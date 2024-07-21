@@ -3,6 +3,7 @@ package me.bestem0r.spawnercollectors.listener;
 import com.Zrips.CMI.CMI;
 import com.Zrips.CMI.Containers.CMIUser;
 import com.Zrips.CMI.events.CMIAfkEnterEvent;
+import com.Zrips.CMI.events.CMIAfkLeaveEvent;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import net.bestemor.core.config.ConfigManager;
 import org.bukkit.Bukkit;
@@ -108,7 +109,7 @@ public class AFKListener implements Listener {
         }
 
         @EventHandler
-        public void onAFKLeave(CMIAfkEnterEvent event) {
+        public void onAFKLeave(CMIAfkLeaveEvent event) {
             String message = ConfigManager.getMessage("messages.no_longer_afk");
             if (!message.equals("")) {
                 event.getPlayer().sendMessage(message);
