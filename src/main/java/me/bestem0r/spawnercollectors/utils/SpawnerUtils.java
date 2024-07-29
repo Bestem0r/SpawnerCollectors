@@ -13,6 +13,7 @@ import org.apache.commons.lang.WordUtils;
 import org.bukkit.*;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -185,5 +186,25 @@ public class SpawnerUtils {
                 .mapToInt(Integer::parseInt)
                 .max()
                 .orElse(0);
+    }
+
+    public static boolean canBeRepaired(ItemStack item) {
+        if (item == null || item.getItemMeta() == null || VersionUtils.getMCVersion() < 9) {
+            return false;
+        }
+        if (!item.getItemMeta().hasEnchants() || !item.getItemMeta().hasEnchant(Enchantment.MENDING)) {
+            return false;
+        }
+
+        return item.getDurability() > 0;
+    }
+
+    public static boolean repair(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) {
+            return false;
+        }
+
+        item.setDurability((short) Math.max(0, item.getDurability() - 2));
+        return item.getDurability() > 0;
     }
 }

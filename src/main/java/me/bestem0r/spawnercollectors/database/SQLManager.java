@@ -166,7 +166,7 @@ public class SQLManager {
         }
     }
 
-    public List<EntityCollector> getEntityCollectors(String uuid) {
+    public List<EntityCollector> getEntityCollectors(Collector collector, String uuid) {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet result = null;
@@ -186,7 +186,11 @@ public class SQLManager {
                 int spawnerAmount = result.getInt("spawner_amount");
 
                 CustomEntityType type = new CustomEntityType(result.getString("entity_type"));
-                entityCollectors.add(new EntityCollector(plugin, type, entityAmount, spawnerAmount));
+
+                EntityCollector entityCollector = new EntityCollector(plugin, collector, type);
+                entityCollector.setEntityAmount(entityAmount);
+                entityCollector.setSpawners(spawnerAmount);
+                entityCollectors.add(entityCollector);
             }
         } catch (SQLException e) {
             e.printStackTrace();

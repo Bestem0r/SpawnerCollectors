@@ -13,6 +13,7 @@ import net.bestemor.core.menu.Menu;
 import net.bestemor.core.menu.MenuContent;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -28,7 +29,7 @@ public class SpawnerMenu extends Menu {
     private Instant nextWithdraw = Instant.now();
 
     public SpawnerMenu(CorePlugin corePlugin, Collector collector) {
-        super(corePlugin.getMenuListener(), 54,  ConfigManager.getString("menus.spawners.title"));
+        super(54,  ConfigManager.getString("menus.spawners.title"));
         this.collector = collector;
         this.plugin = corePlugin;
     }
@@ -59,7 +60,8 @@ public class SpawnerMenu extends Menu {
         content.setClickable(ConfigManager.getInt("menus.items.sell_all.slot"), new Clickable(ConfigManager.getItem("menus.items.sell_all")
                 .replaceCurrency("%avg_production%", collector.getAverageProduction())
                 .replaceCurrency("%worth%", BigDecimal.valueOf(totalWorth)).build(), (event) -> {
-            collector.sellAll((Player) event.getWhoClicked());
+
+            new ConfirmMenu(() -> collector.sellAll((Player) event.getWhoClicked())).open((Player) event.getWhoClicked());
         }));
 
         content.setClickable(ConfigManager.getInt("menus.items.auto_sell_slot"), new Clickable(ConfigManager.getItem("menus.items.auto_sell_" + collector.isAutoSell())
@@ -76,7 +78,7 @@ public class SpawnerMenu extends Menu {
                 continue;
             }
             EntityCollector collected = collector.getCollectorEntities().get(slot);
-            content.setClickable(collector.isSingleEntity() ? 22 : slot, new Clickable(collected.getSpawnerItem(), (event) -> {
+            content.setClickable(collector.isSingleEntity() ? 22 : slot, new Clickable(collected.getSpawnerItem(), event -> {
 
                 Player player = (Player) event.getWhoClicked();
 
@@ -92,9 +94,12 @@ public class SpawnerMenu extends Menu {
                     return;
                 }
 
-                int withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
-                if (collector.isSingleEntity()) {
-                    withdrawAmount = Math.max(withdrawAmount - 1, 0);
+                int withdrawAmount = Math.min(collected.getSpawnerAmount(), 1);
+                if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                    withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
+                }
+                if (collector.isSingleEntity() && collected.getSpawnerAmount() <= 1) {
+                    return;
                 }
 
                 ItemStack spawner = SpawnerUtils.spawnerFromType(collected.getEntityType(), withdrawAmount, plugin);
@@ -106,7 +111,7 @@ public class SpawnerMenu extends Menu {
                 collected.removeSpawners(withdrawAmount);
 
                 if (collected.getSpawnerAmount() < 1) {
-                    collector.sell(player, collected);
+                    collected.sell(player, collected.getEntityAmount());
                     collector.getCollectorEntities().remove(collected);
                     collector.updateEntityMenu();
                 }

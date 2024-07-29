@@ -17,7 +17,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,14 +80,17 @@ public class Collector {
                 long entityAmount = config.getLong("entities." + entityKey);
                 int spawnerAmount = config.getInt("spawners." + entityKey);
                 CustomEntityType type = new CustomEntityType(entityKey);
-                collectorEntities.add(new EntityCollector(plugin, type, entityAmount, spawnerAmount));
+                EntityCollector entityCollector = new EntityCollector(plugin, this, type);
+                entityCollector.setEntityAmount(entityAmount);
+                entityCollector.setSpawners(spawnerAmount);
+                collectorEntities.add(entityCollector);
             }
         }
     }
     private void loadMYSQL() {
         plugin.getSqlManager().loadCollector(this);
         this.collectorEntities.clear();
-        this.collectorEntities.addAll(plugin.getSqlManager().getEntityCollectors(uuid));
+        this.collectorEntities.addAll(plugin.getSqlManager().getEntityCollectors(this, uuid));
     }
 
     /** Adds spawner */
@@ -147,9 +149,11 @@ public class Collector {
                 return false;
             }
 
-            collector.addSpawner(amount);
+            collector.addSpawners(amount);
         } else  {
-            this.collectorEntities.add(new EntityCollector(this.plugin, type, 0, amount));
+            EntityCollector entityCollector = new EntityCollector(plugin, this, type);
+            entityCollector.setSpawners(amount);
+            this.collectorEntities.add(entityCollector);
         }
 
         if (player != null) {
@@ -189,31 +193,6 @@ public class Collector {
         }
         updateSpawnerMenuIfView();
         updateEntityMenuIfView();
-    }
-
-    /** Sells all entities from specified collected */
-    public void sell(Player player, EntityCollector collected) {
-        boolean morePermissions = plugin.isMorePermissions();
-        if (morePermissions && !player.hasPermission("spawnercollectors.sell")) {
-            player.sendMessage(ConfigManager.getMessage("messages.no_permission_sell"));
-            return;
-        }
-        Economy economy = plugin.getEconomy();
-        economy.depositPlayer(player, collected.getTotalWorth(owner));
-
-        if (collected.getTotalWorth(owner) > 0) {
-            SpawnerUtils.playSound(player, "sell");
-            player.sendMessage(ConfigManager.getCurrencyBuilder("messages.sell")
-                    .replaceCurrency("%worth%", BigDecimal.valueOf(collected.getTotalWorth(owner)))
-                    .addPrefix()
-                    .build());
-        }
-
-
-        collected.removeEntities(collected.getEntityAmount());
-        updateEntityMenuIfView();
-        updateSpawnerMenuIfView();
-
     }
 
     /** Attempts to spawn virtual mobs */
@@ -263,7 +242,7 @@ public class Collector {
     /** Returns entity Inventory */
     public void openEntityMenu(Player player) {
         if (this.entityMenu == null) {
-            this.entityMenu = new EntityMenu(plugin.getMenuListener(), this, plugin.getLootManager());
+            this.entityMenu = new EntityMenu( this);
         } else {
             entityMenu.update();
         }
@@ -278,18 +257,18 @@ public class Collector {
     }
 
     /** Updates spawner menu if a player is currently viewing it */
-    private void updateSpawnerMenuIfView() {
+    public void updateSpawnerMenuIfView() {
         if (spawnerMenu != null) {
-            if (spawnerMenu.getViewers().size() > 0) {
+            if (!spawnerMenu.getViewers().isEmpty()) {
                 updateSpawnerMenu();
             }
         }
     }
 
     /** Updates entity menu if a player is currently viewing it */
-    private void updateEntityMenuIfView() {
+    public void updateEntityMenuIfView() {
         if (entityMenu != null) {
-            if (entityMenu.getViewers().size() > 0) {
+            if (!entityMenu.getViewers().isEmpty()) {
                 entityMenu.update();
             }
         }

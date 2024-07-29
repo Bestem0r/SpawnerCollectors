@@ -148,7 +148,8 @@ menus:
     item_lore: #Placeholders: %amount%
       - "&7Amount: &c%amount%"
       - ""
-      - "&7>> Left click to &awithdraw"
+      - "&7>> Left click to &awithdraw 1"
+      - "&7>> Shift left click to &awithdraw 64"
 
   #Sell/withdraw mobs menu
   mobs:
@@ -161,9 +162,10 @@ menus:
       - "&7Worth: &a%worth%"
       - "&7Avg. $/minute: &a%avg_production%/minute"
       - ""
-      - "&7>> Left click to &aSell"
-      - "&7>> Right click to &eWithdraw"
-
+      - "&7>> Left click to &aSell 100"
+      - "&7>> Shift left click to &aSell all"
+      - "&7>> Right click to &eWithdraw 1"
+      - "&7>> Shift right click to &eWithdraw all"
   #Items used in menus
   items:
     auto_sell_slot: 50
@@ -208,3 +210,15 @@ menus:
         - ""
         - "&7>> Click to &asell &7all"
         - "&7collected mobs!"
+  confirm:
+    title: "&8Confirm"
+    confirm:
+      material: LIME_TERRACOTTA
+      name: "&aConfirm"
+      lore:
+        - "&7>> Click to &aconfirm"
+    cancel:
+      material: RED_TERRACOTTA
+      name: "&cCancel"
+      lore:
+        - "&7>> Click to &ccancel"
