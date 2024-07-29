@@ -149,6 +149,19 @@ public class LootManager {
                 if (random == 1) {
                     loot.add(new ItemStack(Material.MAGMA_CREAM));
                 }
+            } else if (entityType == EntityType.SLIME) {
+                int random = (int) (Math.random() * 4 + 1);
+                if (random == 1) {
+                    loot.add(new ItemStack(Material.SLIME_BALL));
+                }
+            } else if (entityType == EntityType.SHEEP) {
+                if (VersionUtils.getMCVersion() < 13) {
+                    loot.add(new ItemStack(Material.valueOf("WOOL"), 1, (short) 1));
+                } else {
+                    loot.add(new ItemStack(Material.valueOf("WHITE_WOOL"), 1));
+                }
+                int random = (int) (Math.random() * 2 + 1);
+                loot.add(new ItemStack(Material.COOKED_MUTTON, random));
             } else {
                 LootTables lootTables = LootTables.valueOf(entityType.name());
                 LootTable lootTable = lootTables.getLootTable();
