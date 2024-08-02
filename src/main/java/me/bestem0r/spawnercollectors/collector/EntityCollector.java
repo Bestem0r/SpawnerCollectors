@@ -215,9 +215,6 @@ public class EntityCollector {
                 player.playSound(player.getLocation(), s, 1.0F, 1.0F);
             }
         }
-
-        collector.updateEntityMenuIfView();
-        collector.updateSpawnerMenuIfView();
     }
 
 

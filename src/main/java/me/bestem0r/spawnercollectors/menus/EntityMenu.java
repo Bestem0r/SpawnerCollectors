@@ -13,6 +13,8 @@ import org.bukkit.event.inventory.InventoryAction;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class EntityMenu extends Menu {
 
@@ -77,12 +79,14 @@ public class EntityMenu extends Menu {
                         return;
                     }
 
-                    long withdrawAmount = 1;
                     if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                        withdrawAmount = 100;
+                        while (Arrays.stream(player.getInventory().getStorageContents())
+                                .anyMatch(Objects::isNull) && collected.getEntityAmount() > 0) {
+                            collected.withdraw(player, 10);
+                        }
+                    } else {
+                        collected.withdraw(player, 1);
                     }
-
-                    collected.withdraw(player, withdrawAmount);
 
                     this.nextWithdraw = Instant.now().plusMillis(ConfigManager.getLong("withdraw_cooldown"));
                     player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);

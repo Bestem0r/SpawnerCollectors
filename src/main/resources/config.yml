@@ -165,7 +165,7 @@ menus:
       - "&7>> Left click to &aSell 100"
       - "&7>> Shift left click to &aSell all"
       - "&7>> Right click to &eWithdraw 1"
-      - "&7>> Shift right click to &eWithdraw all"
+      - "&7>> Shift right click to &eWithdraw until full"
   #Items used in menus
   items:
     auto_sell_slot: 50
