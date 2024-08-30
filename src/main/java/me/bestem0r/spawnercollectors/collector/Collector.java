@@ -17,6 +17,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -379,5 +380,9 @@ public class Collector {
 
     public OfflinePlayer getOwner() {
         return owner;
+    }
+
+    public Plugin getPlugin() {
+        return plugin;
     }
 }

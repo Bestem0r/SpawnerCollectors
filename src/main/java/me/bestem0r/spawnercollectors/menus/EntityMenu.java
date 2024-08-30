@@ -10,16 +10,21 @@ import net.bestemor.core.menu.MenuContent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class EntityMenu extends Menu {
 
     private final Collector collector;
     private Instant nextWithdraw = Instant.now();
+
+    private final Map<UUID, BukkitRunnable> autoFills = new HashMap<>();
 
     public EntityMenu(Collector collector) {
         super(54, ConfigManager.getString("menus.mobs.title"));
@@ -80,10 +85,19 @@ public class EntityMenu extends Menu {
                     }
 
                     if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                        while (Arrays.stream(player.getInventory().getStorageContents())
-                                .anyMatch(Objects::isNull) && collected.getEntityAmount() > 0) {
-                            collected.withdraw(player, 10);
-                        }
+                        BukkitRunnable runnable = new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                if (collected.getEntityAmount() <= 0 || !SpawnerUtils.hasAvailableSlot(player)) {
+                                    cancel();
+                                    autoFills.remove(player.getUniqueId());
+                                    return;
+                                }
+                                collected.withdraw(player, 64);
+                            }
+                        };
+                        runnable.runTaskTimer(collector.getPlugin(), 0, 1);
+                        autoFills.put(player.getUniqueId(), runnable);
                     } else {
                         collected.withdraw(player, 1);
                     }
@@ -124,5 +138,15 @@ public class EntityMenu extends Menu {
 
             collector.toggleAutoSell((Player) event.getWhoClicked());
         }));
+    }
+
+    @Override
+    protected void onClose(InventoryCloseEvent event) {
+        BukkitRunnable runnable = autoFills.get(event.getPlayer().getUniqueId());
+        if (runnable == null) {
+            return;
+        }
+        runnable.cancel();
+        autoFills.remove(event.getPlayer().getUniqueId());
     }
 }
