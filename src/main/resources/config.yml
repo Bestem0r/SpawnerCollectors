@@ -155,6 +155,10 @@ menus:
   mobs:
     #Enabling this will make the menu swap the left and right click actions
     swap_left_right: false
+    #Amount that should be sold when left-clicking
+    sell_amount: 100
+    #Amount that should be withdrawn when right-clicking
+    withdraw_amount: 1
     #GUI title
     title: "&8Collected mobs"
     item_lore: #Placeholders: %amount%

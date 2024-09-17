@@ -61,7 +61,8 @@ public class EntityMenu extends Menu {
                     if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                         new ConfirmMenu(() -> collected.sell(player, collected.getEntityAmount())).open(player);
                     } else {
-                        collected.sell(player, 100);
+                        int sellAmount = ConfigManager.getInt("menus.mobs.sell_amount");
+                        collected.sell(player, sellAmount);
                     }
 
                 } else if ((!swap && right) || (swap && left)) {
@@ -99,7 +100,8 @@ public class EntityMenu extends Menu {
                         runnable.runTaskTimer(collector.getPlugin(), 0, 1);
                         autoFills.put(player.getUniqueId(), runnable);
                     } else {
-                        collected.withdraw(player, 1);
+                        int withdrawAmount = ConfigManager.getInt("menus.mobs.withdraw_amount");
+                        collected.withdraw(player, withdrawAmount);
                     }
 
                     this.nextWithdraw = Instant.now().plusMillis(ConfigManager.getLong("withdraw_cooldown"));
