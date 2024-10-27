@@ -22,6 +22,7 @@ import org.bukkit.plugin.Plugin;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.*;
 
 public class Collector {
@@ -42,6 +43,8 @@ public class Collector {
     private boolean autoSell;
 
     protected boolean loaded = false;
+
+    private Instant nextAutoSave = Instant.now();
 
     public Collector(SCPlugin plugin, String uuid, OfflinePlayer owner) {
         this.plugin = plugin;
@@ -384,5 +387,18 @@ public class Collector {
 
     public Plugin getPlugin() {
         return plugin;
+    }
+
+    public EntityCollector getEntityCollector(CustomEntityType type) {
+        return collectorEntities.stream().filter((c) -> c.getEntityType().name().equals(type.name())).findAny()
+                .orElse(null);
+    }
+
+    public Instant getNextAutoSave() {
+        return nextAutoSave;
+    }
+
+    public void setNextAutoSave(Instant nextAutoSave) {
+        this.nextAutoSave = nextAutoSave;
     }
 }

@@ -71,6 +71,7 @@ withdraw_cooldown: 500
 use_headdb: false
 #Enable this to turn off collectors for AFK players
 afk:
+  cmi: false
   enable: true
   time: 300 #Seconds
   percentage: 0.5 #Percentage of worth to collect

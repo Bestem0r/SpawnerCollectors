@@ -14,10 +14,8 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.ConcurrentModificationException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static me.bestem0r.spawnercollectors.DataStoreMethod.YAML;
@@ -37,6 +35,9 @@ public class CollectorManager {
     private Runnable spawnerThread;
     private Runnable messageThread;
 
+    private long autoSave;
+    private Instant nextAutoSave = Instant.now();
+
     public CollectorManager(SCPlugin plugin) {
         this.plugin = plugin;
 
@@ -52,9 +53,8 @@ public class CollectorManager {
         }
 
         if (plugin.getConfig().getLong("auto_save") > 0) {
-            Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-                collectors.values().forEach(Collector::saveAsync);
-            }, plugin.getConfig().getLong("auto_save") * 20, plugin.getConfig().getLong("auto_save") * 20);
+            this.autoSave = plugin.getConfig().getLong("auto_save");
+            startAutoSave();
         }
 
         for (String uuid : placedConfig.getKeys(false)) {
@@ -98,6 +98,35 @@ public class CollectorManager {
 
     public void saveAll() {
         collectors.values().forEach(Collector::saveSync);
+    }
+
+    private void startAutoSave() {
+        long intervalTicks = 200L;
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+            if (Instant.now().isAfter(nextAutoSave)) {
+
+                int numberOfCollectors = collectors.size();
+                int secondsPerCollector = (int) Math.floor((double) autoSave / numberOfCollectors);
+                int millisecondsPerCollector = (int) Math.floor((double) (autoSave % numberOfCollectors) * 1000 / numberOfCollectors);
+
+                List<Collector> toSave = new ArrayList<>(collectors.values());
+                Collections.shuffle(toSave);
+                for (int i = 0; i < numberOfCollectors; i++) {
+                    toSave.get(i).setNextAutoSave(Instant.now()
+                            .plusSeconds(secondsPerCollector)
+                            .plusMillis(millisecondsPerCollector));
+                }
+
+                nextAutoSave = Instant.now().plusSeconds(autoSave);
+            }
+
+            for (Collector collector : collectors.values()) {
+                if (collector.getNextAutoSave().isBefore(Instant.now())) {
+                    collector.saveAsync();
+                }
+            }
+
+        }, intervalTicks, intervalTicks);
     }
 
     /** Starts async thread to replicate spawner mechanics */

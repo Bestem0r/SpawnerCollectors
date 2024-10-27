@@ -7,6 +7,7 @@ import com.Zrips.CMI.events.CMIAfkLeaveEvent;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import net.bestemor.core.config.ConfigManager;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,10 +33,14 @@ public class AFKListener implements Listener {
         this.afkCheck = plugin.getConfig().getBoolean("afk.enable");
         this.time = plugin.getConfig().getInt("afk.time");
 
-        if (afkCheck && !Bukkit.getPluginManager().isPluginEnabled("CMI")) {
-            runChecker();
-        } else if (afkCheck) {
+        if (!afkCheck) {
+            return;
+        }
+
+        if (ConfigManager.getBoolean("afk.cmi") && Bukkit.getPluginManager().isPluginEnabled("CMI")) {
             Bukkit.getPluginManager().registerEvents(new CMIListener(), plugin);
+        } else {
+            runChecker();
         }
     }
 
@@ -49,7 +54,14 @@ public class AFKListener implements Listener {
         if (afkCheck && !Bukkit.getPluginManager().isPluginEnabled("CMI")) {
             Player player = event.getPlayer();
 
-            if (event.getTo().getDirection().equals(event.getFrom().getDirection())) {
+            Location to = event.getTo();
+            if (to.getDirection().equals(event.getFrom().getDirection())) {
+                return;
+            }
+
+            // Calculate velocity
+            double velocity = Math.sqrt(Math.pow(to.getX() - event.getFrom().getX(), 2) + Math.pow(to.getZ() - event.getFrom().getZ(), 2));
+            if (velocity < 0.15) {
                 return;
             }
 
