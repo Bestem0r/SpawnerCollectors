@@ -87,6 +87,7 @@ public final class SCPlugin extends CorePlugin {
                 .addSubCommand("givespawner", new GiveSpawnerCommand(this))
                 .addSubCommand("open", new OpenCommand(this))
                 .addSubCommand("migrate", new MigrateCommand(this))
+                .addSubCommand("withdraw", new WithdrawCommand(this))
                 .permissionPrefix("spawnercollectors.command")
                 .build();
 

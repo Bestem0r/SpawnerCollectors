@@ -98,9 +98,10 @@ public class SpawnerMenu extends Menu {
                 if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                     withdrawAmount = Math.min(collected.getSpawnerAmount(), 64);
                 }
-                if (collector.isSingleEntity() && collected.getSpawnerAmount() <= 1) {
-                    return;
+                if (collector.isSingleEntity()) {
+                    withdrawAmount = Math.min(collected.getSpawnerAmount() - 1, 64);
                 }
+
 
                 ItemStack spawner = SpawnerUtils.spawnerFromType(collected.getEntityType(), withdrawAmount, plugin);
 
