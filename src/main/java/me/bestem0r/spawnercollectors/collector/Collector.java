@@ -17,7 +17,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +40,7 @@ public class Collector {
     private final SCPlugin plugin;
 
     private boolean autoSell;
+    private boolean compressItems;
 
     protected boolean loaded = false;
 
@@ -77,6 +77,7 @@ public class Collector {
         this.file = new File(plugin.getDataFolder() + "/collectors/" + uuid + ".yml");
         this.config = YamlConfiguration.loadConfiguration(file);
         this.autoSell = config.getBoolean("auto_sell");
+        this.compressItems = config.getBoolean("compress_items");
 
         ConfigurationSection entitySection = config.getConfigurationSection("entities");
         if (entitySection != null) {
@@ -385,7 +386,7 @@ public class Collector {
         return owner;
     }
 
-    public Plugin getPlugin() {
+    public SCPlugin getPlugin() {
         return plugin;
     }
 
@@ -400,5 +401,24 @@ public class Collector {
 
     public void setNextAutoSave(Instant nextAutoSave) {
         this.nextAutoSave = nextAutoSave;
+    }
+
+    public boolean shouldCompressItems() {
+        return compressItems;
+    }
+
+    public void setCompressItems(boolean compressItems) {
+        this.compressItems = compressItems;
+    }
+
+    public void toggleCompressItems(Player whoClicked) {
+        boolean morePermissions = plugin.isMorePermissions();
+        if (morePermissions && !whoClicked.hasPermission("spawnercollectors.compress_items")) {
+            whoClicked.sendMessage(ConfigManager.getMessage("messages.no_permission_compress_items"));
+            return;
+        }
+        compressItems = !compressItems;
+        updateEntityMenuIfView();
+        SpawnerUtils.playSound(whoClicked, "toggle_compress_items");
     }
 }

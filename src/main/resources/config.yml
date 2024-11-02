@@ -124,6 +124,7 @@ messages:
   no_permission_withdraw_mob: "&cYou do not have permission to withdraw mobs!"
   no_permission_auto-sell: "&cYou do not have permission to auto-sell!"
   no_permission_place_spawner: "&cYou do not have permissions to place spawners!"
+  no_permission_compress_items: "&cYou do not have permissions to compress items!"
   afk: "&cYou are now AFK. Collectors are turned off!"
   no_longer_afk: "&aYou are no longer AFK. Collectors working normally"
   withdraw_too_fast: "&cYou are withdrawing too fast!"
@@ -138,6 +139,7 @@ sounds:
   add_spawner: ENTITY_ITEM_PICKUP
   withdraw: ENTITY_ITEM_PICKUP
   toggle_auto_sell: UI_BUTTON_CLICK
+  toggle_compress_items: UI_BUTTON_CLICK
   notification: ENTITY_EXPERIENCE_ORB_PICKUP
 
 #-------------------- Menu settings --------------------#
@@ -215,6 +217,19 @@ menus:
         - ""
         - "&7>> Click to &asell &7all"
         - "&7collected mobs!"
+    compress_items_slot: 53
+    compress_items_true:
+      material: LIME_TERRACOTTA
+      name: "&aCompress items"
+      lore:
+        - "&7>> Click to &cdisable"
+        - "&7item compression!"
+    compress_items_false:
+      material: RED_TERRACOTTA
+      name: "&cCompress items"
+      lore:
+        - "&7>> Click to &aenable"
+        - "&7item compression!"
   confirm:
     title: "&8Confirm"
     confirm:

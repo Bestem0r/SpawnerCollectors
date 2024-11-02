@@ -74,6 +74,7 @@ public final class SCPlugin extends CorePlugin {
         if (storeMethod == MYSQL) {
             sqlManager = new SQLManager(this);
             sqlManager.setupEntityData();
+            sqlManager.setupEntityDataIndex();
             sqlManager.setupPlayerData();
         }
 

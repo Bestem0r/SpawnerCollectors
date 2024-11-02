@@ -207,4 +207,26 @@ public class SpawnerUtils {
         item.setDurability((short) Math.max(0, item.getDurability() - 2));
         return item.getDurability() > 0;
     }
+
+    /** Properly checks if two ItemStacks are equal.
+     * @param item1 An ItemStack.
+     * @param item2 An ItemStack.
+     * @return Whether the two provided ItemStacks are equal or not. */
+    public static boolean compareItems(ItemStack item1, ItemStack item2) {
+        if (item1 == null || item2 == null) { return false; }
+        if (item1.getType() != item2.getType()) { return false; }
+        if (item1.hasItemMeta() != item2.hasItemMeta()) { return false; }
+        ItemStack item1clone = item1.clone();
+        ItemStack item2clone = item2.clone();
+
+        item1clone.setAmount(1);
+        item2clone.setAmount(1);
+
+        if (VersionUtils.getMCVersion() > 12) {
+            item1clone.setDurability((short) 0);
+            item2clone.setDurability((short) 0);
+        }
+
+        return (item1clone.toString() + item1clone.getDurability()).equals((item2clone.toString() + item2clone.getDurability()));
+    }
 }

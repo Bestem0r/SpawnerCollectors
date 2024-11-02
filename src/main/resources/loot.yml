@@ -4,50 +4,69 @@ custom_loot_tables:
   #If you want to use custom loot tables, set this to true
   enable: false
   #List all mobs which should use custom loot tables. If a
-  #mob is not listed, it will default to it's vanilla table
+  #mob is not listed, it will default to its vanilla table
   mobs:
     #EntityType of mob
     SKELETON:
-      #Material
-      BONE:
+      #Id
+      1:
+        #Item
+        item:
+          material: BONE
         #Probability of receiving this item
         probability: 1
         #Minimum amount
         min: 0
         #Maximum amount
         max: 2
-      ARROW:
+      2:
+        item:
+          material: ARROW
         probability: 1
         min: 0
         max: 2
     ZOMBIE:
-      ROTTEN_FLESH:
+      1:
+        item:
+          material: ROTTEN_FLESH
         probability: 1
         min: 0
         max: 2
-      POTATO:
+      2:
+        item:
+          material: POTATO
         probability: 0.025
         min: 1
         max: 1
-      IRON_INGOT:
+      3:
+        item:
+          material: IRON_INGOT
         probability: 0.025
         min: 1
         max: 1
-      CARROT:
+      4:
+        item:
+          material: CARROT
         probability: 0.025
         min: 1
         max: 1
     COW:
-      LEATHER:
+      1:
+        item:
+          material: LEATHER
         probability: 1
         min: 0
         max: 2
-      BEEF:
+      2:
+        item:
+          material: BEEF
         probability: 1
         min: 1
         max: 3
     PIG:
-      PORKCHOP:
+      1:
+        item:
+          material: PORKCHOP
         probability: 1
         min: 1
         max: 3
@@ -57,3 +76,21 @@ custom_xp:
   mobs:
     SKELETON: 10
 
+
+#---------------------- Item compression ----------------------#
+
+# Items that should be compressed
+item_compression:
+  enable: false
+  items:
+    #Item to be compressed
+    IRON_INGOT:
+      #Amount of items needed to compress
+      9:
+        #Item to be received
+        material: IRON_BLOCK
+        name: '&7Compressed Iron Block'
+    GOLD_INGOT:
+      9:
+        material: GOLD_BLOCK
+        name: '&6Compressed Gold Block'

@@ -12,11 +12,13 @@ import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -158,65 +160,115 @@ public class EntityCollector {
         removeEntities(amount);
 
         LootManager lootManager = plugin.getLootManager();
-        for (ItemStack itemStack : lootManager.lootFromType(getEntityType(), player, amount)) {
-            Map<Integer, ItemStack> drop = player.getInventory().addItem(itemStack);
-            for (int i : drop.keySet()) {
-                ItemStack item = drop.get(i);
-                if (item != null && item.getType() != Material.AIR) {
-                    player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
-                }
+        List<ItemStack> loot = lootManager.lootFromType(getEntityType(), player, amount, collector.shouldCompressItems());
+        giveItems(player, loot);
+        calculateAndGiveXp(player, amount);
+
+        collector.updateEntityMenuIfView();
+    }
+
+    public void withdrawUntilFull(Player player) {
+        List<ItemStack> loot = new ArrayList<>();
+        long storedAmount = entityAmount;
+
+        Inventory inventory = cloneInventory(player);
+
+        while (storedAmount != 0) {
+
+            boolean compress = collector.shouldCompressItems();
+            loot = compress ? plugin.getLootManager().compressItems(loot) : loot;
+            inventory.addItem(loot.toArray(new ItemStack[0]));
+
+            if (Arrays.stream(inventory.getStorageContents()).noneMatch(i -> i == null || i.getType().isAir())) {
+                break;
             }
+
+            int amount = (int) Math.min(storedAmount, 100);
+            loot.addAll(plugin.getLootManager().lootFromType(entityType, player, amount, compress));
+
+            storedAmount -= amount;
+            inventory = cloneInventory(player);
         }
-        if (ConfigManager.getBoolean("give_xp") && (!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"))) {
 
-            int xp = 0;
-            if (lootManager.isUseCustomLoot() && lootManager.getCustomXP().containsKey(getEntityType().name())) {
-                xp = (int) (lootManager.getCustomXP().get(getEntityType().name()) * amount);
-            } else {
-                for (EntityExperience e : EntityExperience.values()) {
-                    if (e.name().equals(getEntityType().name())) {
-                        xp = e.getRandomAmount(amount);
-                        break;
-                    }
-                }
-            }
+        giveItems(player, loot);
+        calculateAndGiveXp(player, entityAmount - storedAmount);
+        setEntityAmount(storedAmount);
 
-            if (ConfigManager.getBoolean("mending") && VersionUtils.getMCVersion() > 8) {
-                List<ItemStack> mendable = new ArrayList<>();
+        collector.updateEntityMenuIfView();
+    }
 
-                for (int i = 100; i < 104 && i < player.getInventory().getContents().length; i++) {
-                    ItemStack item = player.getInventory().getContents()[i];
-                    if (SpawnerUtils.canBeRepaired(item)) {
-                        mendable.add(item);
-                    }
-                }
-                ItemStack hand = player.getItemInHand();
-                if (SpawnerUtils.canBeRepaired(hand)) {
-                    mendable.add(hand);
-                }
+    private Inventory cloneInventory(Player player) {
+        Inventory inventory = Bukkit.createInventory(null, 36, "temp");
 
-                if (!mendable.isEmpty()) {
-                    for (int i = 0; i < amount && xp >= 2; i++) {
-                        if (mendable.size() == 0) {
-                            break;
-                        }
-                        ItemStack item = mendable.get(ThreadLocalRandom.current().nextInt(0, mendable.size()));
-                        if (!SpawnerUtils.repair(item)) {
-                            mendable.remove(item);
-                        }
-                        xp -= 2;
-                    }
-                }
-                player.updateInventory();
-            }
-            if (xp >= 0) {
-                player.giveExp(xp);
-                Sound s = Sound.valueOf(VersionUtils.getMCVersion() > 8 ? "ENTITY_EXPERIENCE_ORB_PICKUP" : "ORB_PICKUP");
-                player.playSound(player.getLocation(), s, 1.0F, 1.0F);
+        inventory.addItem(Arrays.stream(player.getInventory().getStorageContents())
+                .filter(i -> i != null && i.getType() != Material.AIR)
+                .map(ItemStack::clone).toArray(ItemStack[]::new));
+        return inventory;
+    }
+
+    private void giveItems(Player player, List<ItemStack> items) {
+        Map<Integer, ItemStack> drop = player.getInventory().addItem(items.toArray(new ItemStack[0]));
+        for (int i : drop.keySet()) {
+            ItemStack item = drop.get(i);
+            if (item != null && item.getType() != Material.AIR) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.getWorld().dropItemNaturally(player.getLocation(), drop.get(i));
+                });
             }
         }
     }
 
+    private void calculateAndGiveXp(Player player, long amount) {
+        if (!ConfigManager.getBoolean("give_xp") || !(!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"))) {
+            return;
+        }
+        int xp = 0;
+        LootManager lootManager = plugin.getLootManager();
+        if (lootManager.isUseCustomLoot() && lootManager.getCustomXP().containsKey(getEntityType().name())) {
+            xp = (int) (lootManager.getCustomXP().get(getEntityType().name()) * amount);
+        } else {
+            for (EntityExperience e : EntityExperience.values()) {
+                if (e.name().equals(getEntityType().name())) {
+                    xp = e.getRandomAmount(amount);
+                    break;
+                }
+            }
+        }
+
+        if (ConfigManager.getBoolean("mending") && VersionUtils.getMCVersion() > 8) {
+            List<ItemStack> mendable = new ArrayList<>();
+
+            for (int i = 100; i < 104 && i < player.getInventory().getContents().length; i++) {
+                ItemStack item = player.getInventory().getContents()[i];
+                if (SpawnerUtils.canBeRepaired(item)) {
+                    mendable.add(item);
+                }
+            }
+            ItemStack hand = player.getItemInHand();
+            if (SpawnerUtils.canBeRepaired(hand)) {
+                mendable.add(hand);
+            }
+
+            if (!mendable.isEmpty()) {
+                for (int i = 0; i < amount && xp >= 2; i++) {
+                    if (mendable.size() == 0) {
+                        break;
+                    }
+                    ItemStack item = mendable.get(ThreadLocalRandom.current().nextInt(0, mendable.size()));
+                    if (!SpawnerUtils.repair(item)) {
+                        mendable.remove(item);
+                    }
+                    xp -= 2;
+                }
+            }
+            player.updateInventory();
+        }
+        if (xp >= 0) {
+            player.giveExp(xp);
+            Sound s = Sound.valueOf(VersionUtils.getMCVersion() > 8 ? "ENTITY_EXPERIENCE_ORB_PICKUP" : "ORB_PICKUP");
+            player.playSound(player.getLocation(), s, 1.0F, 1.0F);
+        }
+    }
 
     public void sell(Player player, long amount) {
 
@@ -247,13 +299,13 @@ public class EntityCollector {
     public void clear() {
         entityAmount = 0;
     }
-
     public CustomEntityType getEntityType() {
         return entityType;
     }
     public long getEntityAmount() {
         return entityAmount;
     }
+
     public int getSpawnerAmount() {
         return spawners.size();
     }

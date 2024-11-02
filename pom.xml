@@ -123,7 +123,7 @@
         <dependency>
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
-            <version>2.10.10</version>
+            <version>2.11.6</version>
             <scope>provided</scope>
         </dependency>
 
@@ -143,7 +143,7 @@
         <dependency>
             <groupId>com.github.Bestem0r</groupId>
             <artifactId>BestemorCore</artifactId>
-            <version>75655c3bd6</version>
+            <version>79e6d68d3f</version>
             <scope>compile</scope>
         </dependency>
 

@@ -46,5 +46,8 @@ permissions:
   spawnercollectors.bypass_limit:
     description: Bypass spawner max limit
     default: op
+  spawnercollectors.compress_items:
+    description: Toggle item compression
+    default: op
 
 

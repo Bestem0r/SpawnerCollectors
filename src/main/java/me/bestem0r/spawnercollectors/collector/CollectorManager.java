@@ -105,13 +105,13 @@ public class CollectorManager {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             if (Instant.now().isAfter(nextAutoSave)) {
 
-                int numberOfCollectors = collectors.size();
+                int numberOfCollectors = collectors.isEmpty() ? 1 : collectors.size();
                 int secondsPerCollector = (int) Math.floor((double) autoSave / numberOfCollectors);
                 int millisecondsPerCollector = (int) Math.floor((double) (autoSave % numberOfCollectors) * 1000 / numberOfCollectors);
 
                 List<Collector> toSave = new ArrayList<>(collectors.values());
                 Collections.shuffle(toSave);
-                for (int i = 0; i < numberOfCollectors; i++) {
+                for (int i = 0; i < numberOfCollectors && i < toSave.size(); i++) {
                     toSave.get(i).setNextAutoSave(Instant.now()
                             .plusSeconds(secondsPerCollector)
                             .plusMillis(millisecondsPerCollector));

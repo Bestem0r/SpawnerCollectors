@@ -10,10 +10,7 @@ import me.bestem0r.spawnercollectors.SCPlugin;
 import me.bestem0r.spawnercollectors.collector.Collector;
 import me.bestem0r.spawnercollectors.collector.EntityCollector;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +45,38 @@ public class SQLManager {
         }
     }
 
+    private boolean columnExists(String tableName, String columnName) throws SQLException {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        try {
+            connection = pool.getConnection();
+            DatabaseMetaData metaData = connection.getMetaData();
+            resultSet = metaData.getColumns(null, null, tableName, columnName);
+            return resultSet.next();
+        } finally {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            if (connection != null) {
+                connection.close();
+            }
+        }
+    }
+
+    public void setupEntityDataIndex() {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = pool.getConnection();
+            statement = connection.prepareStatement("CREATE INDEX entity_data_owner_uuid_index ON entity_data (owner_uuid)");
+            statement.executeUpdate();
+        } catch (SQLException ignored) {
+            // Index already exists
+        } finally {
+            pool.close(connection, statement, null);
+        }
+    }
+
     public void setupPlayerData() {
         Connection connection = null;
         PreparedStatement statement = null;
@@ -57,7 +86,14 @@ public class SQLManager {
                     + "owner_uuid VARCHAR(150) NOT NULL,"
                     + "auto_sell BOOLEAN NOT NULL,"
                     + "PRIMARY KEY (owner_uuid))");
+
             statement.executeUpdate();
+
+            if (!columnExists("player_data", "compress_items")) {
+                String addNewColumn = "ALTER TABLE player_data ADD COLUMN compress_items BOOLEAN NOT NULL DEFAULT FALSE";
+                statement.execute(addNewColumn);
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
@@ -72,9 +108,10 @@ public class SQLManager {
         try {
             connection = pool.getConnection();
 
-            statement = connection.prepareStatement("REPLACE INTO player_data (owner_uuid, auto_sell) values (?,?)");
+            statement = connection.prepareStatement("REPLACE INTO player_data (owner_uuid, auto_sell, compress_items) values (?,?,?)");
             statement.setString(1, collector.getUuid());
             statement.setBoolean(2, collector.isAutoSell());
+            statement.setBoolean(3, collector.shouldCompressItems());
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -138,6 +175,7 @@ public class SQLManager {
 
             if (result.next()) {
                 collector.setAutoSell(result.getBoolean("auto_sell"));
+                collector.setCompressItems(result.getBoolean("compress_items"));
             }
         } catch (SQLException e) {
             e.printStackTrace();

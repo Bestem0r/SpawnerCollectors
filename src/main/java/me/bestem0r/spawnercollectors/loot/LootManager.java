@@ -3,6 +3,7 @@ package me.bestem0r.spawnercollectors.loot;
 import me.bestem0r.spawnercollectors.CustomEntityType;
 import me.bestem0r.spawnercollectors.SCPlugin;
 import net.bestemor.core.config.ConfigManager;
+import net.bestemor.core.config.ItemBuilder;
 import net.bestemor.core.config.VersionUtils;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
@@ -32,7 +33,10 @@ public class LootManager {
     private final Map<String, List<ItemLoot>> customLoot = new HashMap<>();
     private final Map<String, Integer> customXP = new HashMap<>();
 
+    private final List<ItemCompression> itemCompressions = new ArrayList<>();
+
     private boolean useCustomLoot = false;
+    private boolean compressItems = false;
 
     public LootManager(SCPlugin plugin) {
         this.plugin = plugin;
@@ -48,6 +52,7 @@ public class LootManager {
 
         loadCustomLoot();
         loadEntities();
+        loadCompressions();
     }
 
     /** Loads custom loot tables from config */
@@ -68,13 +73,8 @@ public class LootManager {
                 if (items == null) { continue; }
                 for (String itemID : items.getKeys(false)) {
 
-                    ItemStack item;
-                    if (itemID.contains(":")) {
-                        String[] split = itemID.split(":");
-                        item = new ItemStack(Material.valueOf(split[0]), Short.parseShort(split[1]));
-                    } else {
-                        item = new ItemStack(Material.valueOf(itemID));
-                    }
+                    ItemStack item = new ItemBuilder(items.getConfigurationSection(itemID)).build();
+
                     double probability = lootConfig.getDouble("custom_loot_tables.mobs." + mob + "." + itemID + ".probability");
                     int min = lootConfig.getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".min");
                     int max = lootConfig.getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".max");
@@ -105,19 +105,113 @@ public class LootManager {
         }
     }
 
+    private void loadCompressions() {
+        itemCompressions.clear();
+
+        File lootFile = new File(plugin.getDataFolder(), "loot.yml");
+        FileConfiguration lootConfig = YamlConfiguration.loadConfiguration(lootFile);
+
+        this.compressItems = lootConfig.getBoolean("item_compression.enable");
+        if (!compressItems) {
+            return;
+        }
+
+        ConfigurationSection itemsSection = lootConfig.getConfigurationSection("item_compression.items");
+        if (itemsSection != null) {
+            for (String itemKey : itemsSection.getKeys(false)) {
+                Material material = Material.valueOf(itemKey);
+                ConfigurationSection compressionSection = itemsSection.getConfigurationSection(itemKey);
+
+                for (String amountKey : compressionSection.getKeys(false)) {
+                    int amount = Integer.parseInt(amountKey);
+                    ConfigurationSection compressedItemSection = compressionSection.getConfigurationSection(amountKey);
+
+                    SimpleItem itemForCompression = new SimpleItem(material.name());
+                    ItemStack compressedItem = new ItemBuilder(compressedItemSection).build();
+
+                    ItemCompression itemCompression = new ItemCompression(itemForCompression, amount, compressedItem);
+                    itemCompressions.add(itemCompression);
+                }
+            }
+        }
+    }
+
+    public List<ItemStack> compressItems(List<ItemStack> items) {
+
+        if (!compressItems) {
+            return items;
+        }
+
+        Map<SimpleItem, Integer> mergedItems = new HashMap<>();
+        Map<SimpleItem, ItemStack> rawItems = new HashMap<>();
+
+        for (ItemStack item : items) {
+            SimpleItem simpleItem = new SimpleItem(item);
+            mergedItems.put(simpleItem, mergedItems.getOrDefault(simpleItem, 0) + item.getAmount());
+            rawItems.put(simpleItem, item);
+        }
+
+        List<ItemStack> compressedItems = new ArrayList<>();
+        for (Map.Entry<SimpleItem, Integer> entry : mergedItems.entrySet()) {
+            SimpleItem simpleItem = entry.getKey();
+            int totalAmount = entry.getValue();
+
+            int remaining = totalAmount;
+            for (ItemCompression compression : itemCompressions) {
+                if (!compression.shouldCompress(simpleItem, totalAmount)) {
+                    continue;
+                }
+                int compressionAmount = compression.getAmount();
+                int compressedAmount = compressionAmount == 0 ? 0 : totalAmount / compressionAmount;
+                if (compressedAmount > 0) {
+                    addSplitStacks(compressedItems, compression.getCompressedItem(), compressedAmount);
+                }
+                remaining = totalAmount % compressionAmount;
+            }
+
+            if (remaining > 0) {
+                addSplitStacks(compressedItems,rawItems.get(simpleItem), remaining);
+            }
+        }
+
+        return compressedItems;
+    }
+
+    private void addSplitStacks(List<ItemStack> items, ItemStack item, int amount) {
+        int stacks = amount / item.getMaxStackSize();
+        int leftOver = amount % item.getMaxStackSize();
+
+        for (int i = 0; i < stacks; i++) {
+            ItemStack clone = item.clone();
+            clone.setAmount(item.getMaxStackSize());
+            items.add(clone);
+        }
+        if (leftOver > 0) {
+            ItemStack clone = item.clone();
+            clone.setAmount(leftOver);
+            items.add(clone);
+        }
+    }
+
     /** Get loot from entity type */
-    public List<ItemStack> lootFromType(CustomEntityType type, Player player, long amount) {
+    public List<ItemStack> lootFromType(CustomEntityType type, Player player, long amount, boolean compress) {
+        List<ItemStack> loot;
         if (useCustomLoot && plugin.getLootManager().getCustomLoot().containsKey(type.name())) {
-            return lootFromCustom(plugin, type, amount);
+            loot =  lootFromCustom(plugin, type, amount);
         } else {
             if (VersionUtils.getMCVersion() >= 14 && !type.isCustom()) {
-                return lootFromVanilla(type.getEntityType(), player, amount);
+                loot = lootFromVanilla(type.getEntityType(), player, amount);
             } else {
                 Bukkit.getLogger().severe("[SpawnerCollectors] Auto-generated loot is not supported for versions below 1.14! Please enable and use custom loot in config!");
                 player.sendMessage(ChatColor.RED + "[SpawnerCollectors] Unable to auto-generate loot for versions below 1.14! Please contact an administrator and check the console!");
-                return new ArrayList<>();
+                loot = new ArrayList<>();
             }
         }
+
+        if (compress) {
+            loot = compressItems(loot);
+        }
+        return loot;
     }
 
     /** Generates loot from custom loot tables */
@@ -217,6 +311,10 @@ public class LootManager {
 
     public boolean isUseCustomLoot() {
         return useCustomLoot;
+    }
+
+    public boolean isCompressItems() {
+        return compressItems;
     }
 
     public boolean isRegistered(String name) {

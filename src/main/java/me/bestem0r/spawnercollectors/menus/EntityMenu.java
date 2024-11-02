@@ -7,6 +7,7 @@ import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
 import net.bestemor.core.menu.MenuContent;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
@@ -86,19 +87,8 @@ public class EntityMenu extends Menu {
                     }
 
                     if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                        BukkitRunnable runnable = new BukkitRunnable() {
-                            @Override
-                            public void run() {
-                                if (collected.getEntityAmount() <= 0 || !SpawnerUtils.hasAvailableSlot(player)) {
-                                    cancel();
-                                    autoFills.remove(player.getUniqueId());
-                                    return;
-                                }
-                                collected.withdraw(player, 64);
-                            }
-                        };
-                        runnable.runTaskTimer(collector.getPlugin(), 0, 1);
-                        autoFills.put(player.getUniqueId(), runnable);
+                        Bukkit.getScheduler().runTaskAsynchronously(collector.getPlugin(), () -> collected.withdrawUntilFull(player));
+                        player.playSound(player.getLocation(), ConfigManager.getSound("sounds.withdraw"), 1f, 1f);
                     } else {
                         int withdrawAmount = ConfigManager.getInt("menus.mobs.withdraw_amount");
                         collected.withdraw(player, withdrawAmount);
@@ -140,6 +130,14 @@ public class EntityMenu extends Menu {
 
             collector.toggleAutoSell((Player) event.getWhoClicked());
         }));
+
+        int compressItemsSlot = ConfigManager.getInt("menus.items.compress_items_slot");
+        if (collector.getPlugin().getLootManager().isCompressItems()) {
+            String path = "menus.items.compress_items_" + collector.shouldCompressItems();
+            content.setClickable(compressItemsSlot, Clickable.fromConfig(path, event -> {
+                collector.toggleCompressItems((Player) event.getWhoClicked());
+            }));
+        }
     }
 
     @Override
