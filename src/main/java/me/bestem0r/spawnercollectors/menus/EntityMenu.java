@@ -6,17 +6,20 @@ import me.bestem0r.spawnercollectors.utils.SpawnerUtils;
 import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
+import net.bestemor.core.menu.MenuConfig;
 import net.bestemor.core.menu.MenuContent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,14 +30,20 @@ public class EntityMenu extends Menu {
 
     private final Map<UUID, BukkitRunnable> autoFills = new HashMap<>();
 
+    private final List<Integer> slots;
+    private final int singleSlot;
+
     public EntityMenu(Collector collector) {
-        super(54, ConfigManager.getString("menus.mobs.title"));
+        super(MenuConfig.fromConfig("menus.mobs"));
         this.collector = collector;
+        this.slots = ConfigManager.getIntegerList("menus.mobs.slots");
+        this.singleSlot = ConfigManager.getInt("menus.mobs.single_spawner_slot");
     }
 
     @Override
     protected void onCreate(MenuContent menuContent) {
-        menuContent.fillBottom(ConfigManager.getItem("menus.items.filler").build());
+        ItemStack filler = ConfigManager.getItem("menus.items.filler").build();
+        menuContent.fillSlots(filler, ConfigManager.getIntArray("menus.mobs.filler_slots"));
         update();
     }
 
@@ -42,15 +51,17 @@ public class EntityMenu extends Menu {
     protected void onUpdate(MenuContent content) {
         double totalWorth = 0;
 
-        for (int slot = 0; slot < 45; slot++) {
-            if (slot >= collector.getCollectorEntities().size() || (slot > 0 && collector.isSingleEntity())) {
-                if (slot != 22 || !collector.isSingleEntity()) {
+        for (int slot : slots) {
+            int index = slots.indexOf(slot);
+            if (index >= collector.getCollectorEntities().size() || (index > 0 && collector.isSingleEntity())) {
+                if (slot != singleSlot || !collector.isSingleEntity()) {
                     content.setClickable(slot, new Clickable(null));
                 }
                 continue;
             }
-            EntityCollector collected = collector.getCollectorEntities().get(slot);
-            content.setClickable(collector.isSingleEntity() ? 22 : slot, new Clickable(collected.getEntityItem(collector.getOwner()), (event) -> {
+            EntityCollector collected = collector.getCollectorEntities().get(index);
+            ItemStack item = collected.getEntityItem(collector.getOwner());
+            content.setClickable(collector.isSingleEntity() ? singleSlot : slot, new Clickable(item, event -> {
 
                 Player player = (Player) event.getWhoClicked();
                 boolean swap = ConfigManager.getBoolean("menus.mobs.swap_left_right");

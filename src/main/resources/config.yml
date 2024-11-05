@@ -146,8 +146,11 @@ sounds:
 menus:
   #Add/withdraw spawners menu
   spawners:
-    #GUI title
     title: "&8Add / withdraw spawners"
+    size: 54
+    slots: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44 ]
+    single_spawner_slot: 22
+    filler_slots: [ 45, 46, 47, 48, 49, 50, 51, 52, 53 ]
     item_lore: #Placeholders: %amount%
       - "&7Amount: &c%amount%"
       - ""
@@ -162,8 +165,11 @@ menus:
     sell_amount: 100
     #Amount that should be withdrawn when right-clicking
     withdraw_amount: 1
-    #GUI title
     title: "&8Collected mobs"
+    size: 54
+    slots: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44 ]
+    single_spawner_slot: 22
+    filler_slots: [ 45, 46, 47, 48, 49, 50, 51, 52, 53 ]
     item_lore: #Placeholders: %amount%
       - "&7Amount: &c%amount%"
       - "&7Worth: &a%worth%"
@@ -232,13 +238,16 @@ menus:
         - "&7item compression!"
   confirm:
     title: "&8Confirm"
+    size: 27
     confirm:
       material: LIME_TERRACOTTA
+      slot: 12
       name: "&aConfirm"
       lore:
         - "&7>> Click to &aconfirm"
     cancel:
       material: RED_TERRACOTTA
+      slot: 14
       name: "&cCancel"
       lore:
         - "&7>> Click to &ccancel"

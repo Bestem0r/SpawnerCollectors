@@ -10,6 +10,7 @@ import net.bestemor.core.config.ConfigManager;
 import net.bestemor.core.config.VersionUtils;
 import net.bestemor.core.menu.Clickable;
 import net.bestemor.core.menu.Menu;
+import net.bestemor.core.menu.MenuConfig;
 import net.bestemor.core.menu.MenuContent;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -20,6 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public class SpawnerMenu extends Menu {
@@ -28,15 +30,21 @@ public class SpawnerMenu extends Menu {
     private final CorePlugin plugin;
     private Instant nextWithdraw = Instant.now();
 
+    private final List<Integer> slots;
+    private final int singleSlot;
+
     public SpawnerMenu(CorePlugin corePlugin, Collector collector) {
-        super(54,  ConfigManager.getString("menus.spawners.title"));
+        super(MenuConfig.fromConfig("menus.spawners"));
         this.collector = collector;
         this.plugin = corePlugin;
+        this.slots = ConfigManager.getIntegerList("menus.spawners.slots");
+        this.singleSlot = ConfigManager.getInt("menus.spawners.single_spawner_slot");
     }
 
     @Override
     protected void onCreate(MenuContent menuContent) {
-        menuContent.fillBottom(ConfigManager.getItem("menus.items.filler").build());
+        ItemStack filler = ConfigManager.getItem("menus.items.filler").build();
+        menuContent.fillSlots(filler, ConfigManager.getIntArray("menus.spawners.filler_slots"));
         update();
     }
 
@@ -70,15 +78,17 @@ public class SpawnerMenu extends Menu {
             collector.toggleAutoSell((Player) event.getWhoClicked());
         }));
 
-        for (int slot = 0; slot < 45; slot++) {
-            if (slot >= collector.getCollectorEntities().size() || (slot > 0 && collector.isSingleEntity())) {
-                if (slot != 22 || !collector.isSingleEntity()) {
+        for (int slot : slots) {
+            int index = slots.indexOf(slot);
+            if (index >= collector.getCollectorEntities().size() || (index > 0 && collector.isSingleEntity())) {
+                if (slot != singleSlot || !collector.isSingleEntity()) {
                     content.setClickable(slot, new Clickable(null));
                 }
                 continue;
             }
-            EntityCollector collected = collector.getCollectorEntities().get(slot);
-            content.setClickable(collector.isSingleEntity() ? 22 : slot, new Clickable(collected.getSpawnerItem(), event -> {
+            EntityCollector collected = collector.getCollectorEntities().get(index);
+            ItemStack item = collected.getSpawnerItem();
+            content.setClickable(collector.isSingleEntity() ? singleSlot : slot, new Clickable(item, event -> {
 
                 Player player = (Player) event.getWhoClicked();
 
