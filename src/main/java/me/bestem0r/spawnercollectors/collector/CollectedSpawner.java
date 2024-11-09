@@ -17,12 +17,16 @@ public class CollectedSpawner {
         this.minTime = minTime;
         this.maxTime = maxTime;
 
+        resetTime();
+    }
+
+    public void resetTime() {
         this.nextSpawn = Instant.now().plusSeconds(ThreadLocalRandom.current().nextInt(minTime, maxTime + 1));
     }
 
     public int attemptSpawn() {
         if (Instant.now().isAfter(nextSpawn)) {
-            this.nextSpawn = Instant.now().plusSeconds(ThreadLocalRandom.current().nextInt(minTime, maxTime + 1));
+            resetTime();
             return amount;
         }
         return 0;

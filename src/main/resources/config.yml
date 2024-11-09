@@ -50,6 +50,8 @@ more_permissions: false
 #This also requires the player to have permission node:
 #spawnercollectors.receive_xp
 give_xp: true
+#Should xp be given when mobs are sold? Requires 'give_xp'
+give_xp_on_sell: false
 #When enabled, right-clicking a spawner in your hand without
 #placing it will open the spawner menu.
 right_click_spawner_menu: true

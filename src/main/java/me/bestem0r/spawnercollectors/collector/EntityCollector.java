@@ -39,7 +39,6 @@ public class EntityCollector {
         this.collector = collector;
     }
 
-    /** Adds entities */
     public void attemptSpawn(boolean autoSell, OfflinePlayer player, double modifier) {
 
         long spawned = spawners.stream().mapToLong(CollectedSpawner::attemptSpawn).sum();
@@ -64,6 +63,10 @@ public class EntityCollector {
                 entityAmount += spawned;
             }
         }
+    }
+
+    public void resetTime() {
+        spawners.forEach(CollectedSpawner::resetTime);
     }
 
     public void addSpawners(int amount) {
@@ -219,7 +222,7 @@ public class EntityCollector {
     }
 
     private void calculateAndGiveXp(Player player, long amount) {
-        if (!ConfigManager.getBoolean("give_xp") || !(!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"))) {
+        if (!canReceiveXp(player)) {
             return;
         }
         int xp = 0;
@@ -290,6 +293,10 @@ public class EntityCollector {
                     .build());
         }
 
+        if (canReceiveXp(player) && ConfigManager.getBoolean("give_xp_on_sell")) {
+            calculateAndGiveXp(player, amount);
+        }
+
         removeEntities(amount);
 
         collector.updateEntityMenuIfView();
@@ -308,6 +315,10 @@ public class EntityCollector {
 
     public int getSpawnerAmount() {
         return spawners.size();
+    }
+
+    private boolean canReceiveXp(Player player) {
+        return ConfigManager.getBoolean("give_xp") && (!ConfigManager.getBoolean("more_permissions") || player.hasPermission("spawnercollectors.receive_xp"));
     }
 
     public BigDecimal getMinutelyProduction(OfflinePlayer owner) {

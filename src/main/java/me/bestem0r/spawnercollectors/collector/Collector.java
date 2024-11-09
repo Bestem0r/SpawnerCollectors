@@ -208,11 +208,17 @@ public class Collector {
             if (player != null && plugin.getAfkChecker().isAfkCheck() && plugin.getAfkChecker().isAFK(player)) {
                 modifier = plugin.getConfig().getDouble("afk.percentage");
             }
+            for (EntityCollector entityCollector : collectorEntities) {
+                entityCollector.attemptSpawn(autoSell, owner, modifier);
+            }
+            updateEntityMenuIfView();
+        } else {
+            resetTime();
         }
-        for (EntityCollector entityCollector : collectorEntities) {
-            entityCollector.attemptSpawn(autoSell, owner, modifier);
-        }
-        updateEntityMenuIfView();
+    }
+
+    public void resetTime() {
+        collectorEntities.forEach(EntityCollector::resetTime);
     }
 
     /** Toggles auto-sell */
