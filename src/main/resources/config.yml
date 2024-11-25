@@ -77,7 +77,8 @@ afk:
   enable: true
   time: 300 #Seconds
   percentage: 0.5 #Percentage of worth to collect
-
+#Enabling this will make cave spiders count as spiders
+cave_spider_is_spider: false
 
 #---------------- Data Storage Settings ----------------#
 
