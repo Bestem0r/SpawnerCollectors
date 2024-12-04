@@ -73,7 +73,7 @@ public class LootManager {
                 if (items == null) { continue; }
                 for (String itemID : items.getKeys(false)) {
 
-                    ItemStack item = new ItemBuilder(items.getConfigurationSection(itemID)).build();
+                    ItemStack item = new ItemBuilder(items.getConfigurationSection(itemID + ".item")).build();
 
                     double probability = lootConfig.getDouble("custom_loot_tables.mobs." + mob + "." + itemID + ".probability");
                     int min = lootConfig.getInt("custom_loot_tables.mobs." + mob + "." + itemID + ".min");
